@@ -14,8 +14,11 @@
     <style>
         body { font-family: Arial, sans-serif; max-width: 650px; margin: 20px auto; padding: 20px; background: #f4f6f8; color: #333; }
         .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        h2 { margin-top: 0; color: #0066cc; }
         
+        .header-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        h2 { margin: 0; color: #0066cc; }
+        .lang-select { padding: 5px 8px; font-size: 14px; border-radius: 4px; border: 1px solid #ccc; cursor: pointer; }
+
         .status-box { background: #eef5fc; border-left: 4px solid #0066cc; padding: 12px; margin: 15px 0; border-radius: 0 4px 4px 0; font-size: 14px; }
         .version-select { width: 100%; padding: 8px; margin-top: 5px; margin-bottom: 10px; font-size: 14px; border-radius: 4px; border: 1px solid #ccc; }
         
@@ -36,20 +39,26 @@
 <body>
 
     <div class="card">
-        <h2>⚡ ESP32-S3 Web Flasher</h2>
-        <p>Flashe die Firmware direkt aus dem Browser auf deinen ESP32-S3. Standardmäßig ist die neueste Version gewählt.</p>
+        <div class="header-container">
+            <h2>⚡ ESP32-S3 Web Flasher</h2>
+            <select id="langSelect" class="lang-select">
+                <option value="de">🇩🇪 DE</option>
+                <option value="en">🇬🇧 EN</option>
+            </select>
+        </div>
+        <p data-i18n="subtitle">Flashe die Firmware direkt aus dem Browser auf deinen ESP32-S3. Standardmäßig ist die neueste Version gewählt.</p>
         
         <div class="status-box">
-            <label for="releaseSelect"><strong>Gewähltes Release:</strong></label>
+            <label for="releaseSelect"><strong data-i18n="labelSelectedRelease">Gewähltes Release:</strong></label>
             <select id="releaseSelect" class="version-select">
-                <option value="">Lade verfügbare Releases...</option>
+                <option value="" data-i18n="optLoadingReleases">Lade verfügbare Releases...</option>
             </select>
-            <strong>Gefundene Datei:</strong> <span id="fileInfo">Lade Firmware-Informationen...</span>
+            <strong data-i18n="labelFoundFile">Gefundene Datei:</strong> <span id="fileInfo" data-i18n="infoLoadingFirmware">Lade Firmware-Informationen...</span>
         </div>
 
         <div>
-            <button id="connectBtn" disabled>1. ESP32 Verbinden</button>
-            <button id="flashBtn" disabled>2. Flashen (0x0000)</button>
+            <button id="connectBtn" data-i18n="btnConnect" disabled>1. ESP32 Verbinden</button>
+            <button id="flashBtn" data-i18n="btnFlash" disabled>2. Flashen (0x0000)</button>
         </div>
 
         <div class="progress-bar-container" id="progressContainer">
@@ -58,20 +67,81 @@
     </div>
 
     <div class="card">
-        <h3>💻 Serieller Monitor (Terminal)</h3>
+        <h3 data-i18n="terminalTitle">💻 Serieller Monitor (Terminal)</h3>
         <div id="console">Lade Web Flasher...</div>
     </div>
 
     <footer>
-        <a href="https://github.com/panthaflow/ESP32_BLE_Keyboard" target="_blank">ESP32_BLE_Keyboard auf GitHub</a>
+        <a href="https://github.com/panthaflow/ESP32_BLE_Keyboard" target="_blank" data-i18n="footerRepo">ESP32_BLE_Keyboard auf GitHub</a>
     </footer>
 
     <script type="module">
         import { ESPLoader, Transport } from "https://unpkg.com/esptool-js@0.4.3/bundle.js";
 
         const REPO = "panthaflow/ESP32_BLE_Keyboard";
-        const LOCAL_FIRMWARE_PATH = "ESP32_Keyboard_v1.0.1.ino.merged.bin";
         
+        const i18n = {
+            de: {
+                subtitle: "Flashe die Firmware direkt aus dem Browser auf deinen ESP32-S3. Standardmäßig ist die neueste Version gewählt.",
+                labelSelectedRelease: "Gewähltes Release:",
+                optLoadingReleases: "Lade verfügbare Releases...",
+                labelFoundFile: "Gefundene Datei:",
+                infoLoadingFirmware: "Lade Firmware-Informationen...",
+                btnConnect: "1. ESP32 Verbinden",
+                btnFlash: "2. Flashen (0x0000)",
+                terminalTitle: "💻 Serieller Monitor (Terminal)",
+                footerRepo: "ESP32_BLE_Keyboard auf GitHub",
+                latestBadge: "(Neueste / Latest)",
+                logSearching: "🔍 Suche auf GitHub nach verfügbaren Releases...",
+                logTryLocal: "ℹ️ Versuche direkte lokale Firmware zu laden...",
+                logDirectLoaded: "✅ Firmware direkt vom Host-Server geladen!",
+                logNoFirmware: "❌ Fehler: Keine Firmware konnte geladen werden.",
+                logLoadingVersion: "📥 Lade Firmware für Version ",
+                logProxyLoaded: "✅ Firmware ({tag}) erfolgreich geladen! Bereit zum Verbinden.",
+                logProxyFailed: "❌ Fehler beim Laden der Version ",
+                logConnecting: "🔌 Verbinde mit dem seriellen Port...",
+                logConnected: "✅ Erfolgreich mit dem ESP32 verbunden!",
+                logConnError: "❌ Verbindung abgebrochen / Fehler: ",
+                logClosingPort: "🔄 Schließe seriellen Port...",
+                logStartingFlash: "🚀 Starte Flash-Vorgang (Offset 0x0000)...",
+                logFlashSuccess: "\n🎉 Flash-Vorgang ERFOLGREICH abgeschlossen!",
+                logRestarting: "🔄 Der ESP32 wird neu gestartet...",
+                logFlashError: "\n❌ Fehler beim Flashen: ",
+                errNoWebSerial: "Dein Browser unterstützt kein Web Serial! Bitte benutze Google Chrome, Microsoft Edge oder Opera."
+            },
+            en: {
+                subtitle: "Flash the firmware directly from your browser to your ESP32-S3. The latest version is selected by default.",
+                labelSelectedRelease: "Selected Release:",
+                optLoadingReleases: "Loading available releases...",
+                labelFoundFile: "Found file:",
+                infoLoadingFirmware: "Loading firmware details...",
+                btnConnect: "1. Connect ESP32",
+                btnFlash: "2. Flash (0x0000)",
+                terminalTitle: "💻 Serial Monitor (Terminal)",
+                footerRepo: "ESP32_BLE_Keyboard on GitHub",
+                latestBadge: "(Latest)",
+                logSearching: "🔍 Searching GitHub for available releases...",
+                logTryLocal: "ℹ️ Attempting to load direct local firmware...",
+                logDirectLoaded: "✅ Firmware loaded directly from host server!",
+                logNoFirmware: "❌ Error: Could not load any firmware.",
+                logLoadingVersion: "📥 Downloading firmware for version ",
+                logProxyLoaded: "✅ Firmware ({tag}) successfully loaded! Ready to connect.",
+                logProxyFailed: "❌ Error loading version ",
+                logConnecting: "🔌 Connecting to serial port...",
+                logConnected: "✅ Successfully connected to ESP32!",
+                logConnError: "❌ Connection aborted / Error: ",
+                logClosingPort: "🔄 Closing serial port...",
+                logStartingFlash: "🚀 Starting flash process (Offset 0x0000)...",
+                logFlashSuccess: "\n🎉 Flashing process COMPLETED SUCCESSFULLY!",
+                logRestarting: "🔄 Restarting ESP32...",
+                logFlashError: "\n❌ Error while flashing: ",
+                errNoWebSerial: "Your browser does not support Web Serial! Please use Google Chrome, Microsoft Edge, or Opera."
+            }
+        };
+
+        let currentLang = localStorage.getItem('appLang') || 'de';
+
+        const langSelect = document.getElementById('langSelect');
         const releaseSelect = document.getElementById('releaseSelect');
         const connectBtn = document.getElementById('connectBtn');
         const flashBtn = document.getElementById('flashBtn');
@@ -85,6 +155,17 @@
         let esploader = null;
         let fileBinaryData = null;
         let releasesMap = {};
+
+        function updateLanguage(lang) {
+            currentLang = lang;
+            localStorage.setItem('appLang', lang);
+            langSelect.value = lang;
+
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (i18n[lang][key]) el.innerHTML = i18n[lang][key];
+            });
+        }
 
         function log(text) {
             consoleDiv.innerText += text + "\n";
@@ -102,7 +183,7 @@
                     device = null;
                 }
             } catch (e) {
-                console.warn("Fehler beim Schließen des Ports:", e);
+                console.warn("Error closing port:", e);
             }
             esploader = null;
             connectBtn.disabled = !fileBinaryData;
@@ -111,16 +192,15 @@
 
         consoleDiv.innerText = "";
 
-        // Alle Releases von GitHub laden und im Dropdown anzeigen
         async function fetchAllReleases() {
             try {
-                log("🔍 Suche auf GitHub nach verfügbaren Releases...");
+                log(i18n[currentLang].logSearching);
                 const response = await fetch(`https://api.github.com/repos/${REPO}/releases`);
                 
-                if (!response.ok) throw new Error("Release API nicht erreichbar.");
+                if (!response.ok) throw new Error("Release API error");
                 
                 const releases = await response.json();
-                if (!releases || releases.length === 0) throw new Error("Keine Releases im Repo gefunden.");
+                if (!releases || releases.length === 0) throw new Error("No releases found.");
 
                 releaseSelect.innerHTML = "";
                 releasesMap = {};
@@ -130,8 +210,7 @@
                     if (mergedAsset) {
                         const option = document.createElement('option');
                         option.value = rel.tag_name;
-                        // Neueste Version markieren
-                        option.textContent = `${rel.name || rel.tag_name} ${index === 0 ? '(Neueste / Latest)' : ''}`;
+                        option.textContent = `${rel.name || rel.tag_name} ${index === 0 ? i18n[currentLang].latestBadge : ''}`;
                         releaseSelect.appendChild(option);
                         
                         releasesMap[rel.tag_name] = mergedAsset;
@@ -139,35 +218,35 @@
                 });
 
                 if (Object.keys(releasesMap).length === 0) {
-                    throw new Error("Keine 'merged.bin' Dateien in den Releases gefunden.");
+                    throw new Error("No merged.bin assets found.");
                 }
 
-                // Standardmäßig das neueste Release laden
                 const latestTag = releaseSelect.value;
                 loadSelectedFirmware(latestTag);
 
             } catch (err) {
                 console.error(err);
-                log("ℹ️ Versuche lokale Firmware zu laden...");
+                log(i18n[currentLang].logTryLocal);
                 tryFetchLocalFirmware();
             }
         }
 
         async function tryFetchLocalFirmware() {
             try {
-                const localRes = await fetch(LOCAL_FIRMWARE_PATH);
+                // Versuche die Datei direkt vom Webserver/Repository zu laden
+                const localRes = await fetch("ESP32_Keyboard_v1.0.1.ino.merged.bin");
                 if (localRes.ok) {
                     fileBinaryData = await localRes.arrayBuffer();
-                    releaseSelect.innerHTML = `<option>v1.0.1 (Direktes Host-Release)</option>`;
-                    fileInfo.innerText = `${LOCAL_FIRMWARE_PATH} (${(fileBinaryData.byteLength / 1024 / 1024).toFixed(2)} MB)`;
-                    log("✅ Firmware direkt vom Host geladen!");
+                    releaseSelect.innerHTML = `<option>v1.0.1 (Direct Host Release)</option>`;
+                    fileInfo.innerText = `ESP32_Keyboard_v1.0.1.ino.merged.bin (${(fileBinaryData.byteLength / 1024 / 1024).toFixed(2)} MB)`;
+                    log(i18n[currentLang].logDirectLoaded);
                     connectBtn.disabled = false;
                 } else {
-                    throw new Error("Lokale Firmware nicht gefunden.");
+                    throw new Error("Local firmware missing");
                 }
             } catch(e) {
-                log("❌ Fehler: Keine Firmware konnte geladen werden.");
-                fileInfo.innerText = "Download-Fehler";
+                log(i18n[currentLang].logNoFirmware);
+                fileInfo.innerText = "Download Error (CORS)";
             }
         }
 
@@ -178,26 +257,58 @@
             connectBtn.disabled = true;
             flashBtn.disabled = true;
             fileBinaryData = null;
-            fileInfo.innerText = `${asset.name} (${(asset.size / 1024 / 1024).toFixed(2)} MB) - Lade...`;
-            log(`📥 Lade Firmware für Version ${tagName}: ${asset.name}...`);
+            fileInfo.innerText = `${asset.name} (${(asset.size / 1024 / 1024).toFixed(2)} MB) - Loading...`;
+            log(i18n[currentLang].logLoadingVersion + tagName + `: ${asset.name}...`);
 
+            // 1. Direktversuch: Datei aus dem lokalen Host-Pfad laden
             try {
-                const proxyUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(asset.browser_download_url)}`;
-                const binResponse = await fetch(proxyUrl);
-                
-                if (!binResponse.ok) throw new Error("Download über Proxy fehlgeschlagen.");
-
-                fileBinaryData = await binResponse.arrayBuffer();
-                fileInfo.innerText = `${asset.name} (${(fileBinaryData.byteLength / 1024 / 1024).toFixed(2)} MB)`;
-                log(`✅ Firmware (${tagName}) erfolgreich geladen! Bereit zum Verbinden.`);
-                connectBtn.disabled = false;
-
-            } catch (err) {
-                console.error(err);
-                log("❌ Fehler beim Laden der Version " + tagName + ": " + err.message);
-                fileInfo.innerText = "Download-Fehler (CORS)";
+                const directRes = await fetch(asset.name);
+                if (directRes.ok) {
+                    fileBinaryData = await directRes.arrayBuffer();
+                    fileInfo.innerText = `${asset.name} (${(fileBinaryData.byteLength / 1024 / 1024).toFixed(2)} MB)`;
+                    log(i18n[currentLang].logDirectLoaded);
+                    connectBtn.disabled = false;
+                    return;
+                }
+            } catch (e) {
+                // Bei Misserfolg über Fallback-Proxies gehen
             }
+
+            // 2. Fallback: Proxy-Download
+            const proxies = [
+                `https://api.allorigins.win/raw?url=${encodeURIComponent(asset.browser_download_url)}`,
+                `https://corsproxy.io/?${encodeURIComponent(asset.browser_download_url)}`
+            ];
+
+            for (const proxyUrl of proxies) {
+                try {
+                    const binResponse = await fetch(proxyUrl);
+                    if (binResponse.ok) {
+                        fileBinaryData = await binResponse.arrayBuffer();
+                        fileInfo.innerText = `${asset.name} (${(fileBinaryData.byteLength / 1024 / 1024).toFixed(2)} MB)`;
+                        const loadedMsg = i18n[currentLang].logProxyLoaded.replace('{tag}', tagName);
+                        log(loadedMsg);
+                        connectBtn.disabled = false;
+                        return;
+                    }
+                } catch (err) {
+                    console.warn("Proxy failed, trying next...", err);
+                }
+            }
+
+            log(i18n[currentLang].logProxyFailed + tagName);
+            fileInfo.innerText = "Download Error (CORS)";
         }
+
+        langSelect.addEventListener('change', (e) => {
+            updateLanguage(e.target.value);
+            const firstOption = releaseSelect.options[0];
+            if (firstOption && firstOption.value) {
+                const tagName = firstOption.value;
+                const cleanName = releasesMap[tagName] ? (releasesMap[tagName].name || tagName) : tagName;
+                firstOption.textContent = `${cleanName} ${i18n[currentLang].latestBadge}`;
+            }
+        });
 
         releaseSelect.addEventListener('change', (e) => {
             if (e.target.value) {
@@ -207,7 +318,7 @@
 
         connectBtn.addEventListener('click', async () => {
             if (navigator.serial === undefined) {
-                alert("Dein Browser unterstützt kein Web Serial! Bitte benutze Google Chrome, Microsoft Edge oder Opera.");
+                alert(i18n[currentLang].errNoWebSerial);
                 return;
             }
 
@@ -217,7 +328,7 @@
                 device = await navigator.serial.requestPort();
                 transport = new Transport(device);
                 
-                log("🔌 Verbinde mit dem seriellen Port...");
+                log(i18n[currentLang].logConnecting);
                 esploader = new ESPLoader({
                     transport: transport,
                     baudrate: 115200,
@@ -229,15 +340,15 @@
                 });
 
                 await esploader.main();
-                log("✅ Erfolgreich mit dem ESP32 verbunden!");
+                log(i18n[currentLang].logConnected);
                 
                 flashBtn.disabled = false;
                 connectBtn.disabled = true;
 
             } catch (err) {
                 console.error(err);
-                log("❌ Verbindung abgebrochen / Fehler: " + err.message);
-                log("🔄 Schließe seriellen Port...");
+                log(i18n[currentLang].logConnError + err.message);
+                log(i18n[currentLang].logClosingPort);
                 await disconnectPort();
             }
         });
@@ -250,7 +361,7 @@
                 progressContainer.style.display = "block";
                 progressBar.style.width = "0%";
                 
-                log("🚀 Starte Flash-Vorgang (Offset 0x0000)...");
+                log(i18n[currentLang].logStartingFlash);
 
                 const bytes = new Uint8Array(fileBinaryData);
                 let binaryString = "";
@@ -275,20 +386,21 @@
                     }
                 });
 
-                log("\n🎉 Flash-Vorgang ERFOLGREICH abgeschlossen!");
-                log("🔄 Der ESP32 wird neu gestartet...");
+                log(i18n[currentLang].logFlashSuccess);
+                log(i18n[currentLang].logRestarting);
                 
                 await esploader.hardReset();
                 
             } catch (err) {
                 console.error(err);
-                log("\n❌ Fehler beim Flashen: " + err.message);
+                log(i18n[currentLang].logFlashError + err.message);
             } finally {
-                log("🔌 Schließe seriellen Port...");
+                log(i18n[currentLang].logClosingPort);
                 await disconnectPort();
             }
         });
 
+        updateLanguage(currentLang);
         fetchAllReleases();
     </script>
 </body>
