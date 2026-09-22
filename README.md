@@ -28,7 +28,7 @@ Unterstützt einen extrem schnellen **Windows-Modus via Alt-Codes** sowie einen 
 
 ## 🌐 Web-Interface (Web Bluetooth)
 
-Für die Steuerung über den Browser ist eine einfache `index.html` enthalten.
+Für die Steuerung über den Browser ist eine einfache `.html` enthalten.
 
 > **Hinweis:** Die Web Bluetooth API erfordert einen unterstützen Browser (Chrome, Edge, Opera) und muss entweder über `https://` (z. B. via GitHub Pages) oder lokal über `file://` aufgerufen werden.
 
