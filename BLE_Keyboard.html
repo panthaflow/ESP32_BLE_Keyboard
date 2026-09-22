@@ -12,6 +12,11 @@
         .header-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .lang-select { padding: 5px 8px; font-size: 14px; border-radius: 4px; border: 1px solid #ccc; cursor: pointer; }
 
+        /* Update Meldung */
+        .info-box { background-color: #eef5fc; border-left: 4px solid #0066cc; padding: 10px; margin-bottom: 20px; font-size: 14px; border-radius: 0 4px 4px 0; }
+        .info-box a { color: #0066cc; text-decoration: none; font-weight: bold; }
+        .info-box a:hover { text-decoration: underline; }
+
         #cadBtn { background-color: #ff4d4d; color: white; border: none; border-radius: 4px; }
         #cadBtn:disabled { background-color: #ffb3b3; cursor: not-allowed; }
         
@@ -49,6 +54,11 @@
         </select>
     </div>
     
+    <div class="info-box">
+        <span data-i18n="updateMessage">Firmware aktualisieren? Nutze den </span>
+        <a href="https://panthaflow.github.io/ESP32_BLE_Keyboard/WebFlasher.html" target="_blank" data-i18n="updateLink">Web Flasher</a>
+    </div>
+
     <button id="connectBtn" data-i18n="btnConnect">1. Bluetooth Verbinden</button>
     <br><br>
     
@@ -100,6 +110,8 @@
         // Sprachressourcen (Internationalisierung)
         const i18n = {
             de: {
+                updateMessage: "Firmware aktualisieren? Nutze den ",
+                updateLink: "Web Flasher",
                 btnConnect: "1. Bluetooth Verbinden",
                 settingsTitle: "⚙️ Erweiterte Einstellungen",
                 labelDelay: "Verzögerung (in Sekunden): ",
@@ -121,6 +133,8 @@
                 footerReportLink: "Hier melden"
             },
             en: {
+                updateMessage: "Want to update the firmware? Use the ",
+                updateLink: "Web Flasher",
                 btnConnect: "1. Connect Bluetooth",
                 settingsTitle: "⚙️ Advanced Settings",
                 labelDelay: "Delay (in seconds): ",
