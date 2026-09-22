@@ -2,7 +2,7 @@
 
 ![License](https://img.shields.io/github/license/panthaflow/ESP32_BLE_Keyboard?color=blue) &nbsp;&nbsp;&nbsp; [![Stars](https://img.shields.io/github/stars/panthaflow/ESP32_BLE_Keyboard?style=social)](https://github.com/panthaflow/ESP32_BLE_Keyboard/stargazers) &nbsp;&nbsp;&nbsp; ![Release](https://img.shields.io/github/v/release/panthaflow/ESP32_BLE_Keyboard?color=green) &nbsp;&nbsp;&nbsp; ![ESP32-S3](https://img.shields.io/badge/Hardware-ESP32--S3-orange)
 
-[English](#-english) | [Deutsch](#-deutsch) | [🌐 Live Demo](https://panthaflow.github.io/ESP32_BLE_Keyboard/)
+[English](#-english) | [Deutsch](#-deutsch) | [🌐 Live Demo](https://panthaflow.github.io/ESP32_BLE_Keyboard/BLE_Keyboard.html)
 
 ---
 
@@ -13,7 +13,7 @@ The device connects via **Web Bluetooth** directly through any modern web browse
 
 Supports a lightning-fast **Windows mode via Alt codes** and a **BIOS Boot Protocol mode** for direct input in server BIOS, UEFI, iDRAC/iLO, and pre-boot environments.
 
-> 🚀 **Try it out directly:** Launch the [Web Bluetooth Control Panel (Live Demo)](https://panthaflow.github.io/ESP32_BLE_Keyboard/) in your browser.
+> 🚀 **Try it out directly:** Launch the [Web Bluetooth Control Panel (Live Demo)](https://panthaflow.github.io/ESP32_BLE_Keyboard/BLE_Keyboard.html) in your browser.
 
 ---
 
