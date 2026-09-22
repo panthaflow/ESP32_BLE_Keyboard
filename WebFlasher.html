@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ESP32-S3 Web Flasher & Terminal</title>
-    <!-- ESPTool JS via Unpkg CDN -->
-    <script type="module" src="https://unpkg.com/esptool-js@0.4.3/bundle.js"></script>
     <style>
         body { font-family: Arial, sans-serif; max-width: 650px; margin: 20px auto; padding: 20px; background: #f4f6f8; color: #333; }
         .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
@@ -20,7 +18,6 @@
         #flashBtn { background-color: #4CAF50; color: white; }
         #flashBtn:disabled, #connectBtn:disabled { background-color: #cccccc; cursor: not-allowed; }
         
-        /* Serielles Terminal Styling */
         #console { background: #1e1e1e; color: #00ff66; font-family: 'Courier New', Courier, monospace; font-size: 13px; height: 250px; overflow-y: auto; padding: 10px; border-radius: 4px; white-space: pre-wrap; word-break: break-all; margin-top: 10px; }
         
         footer { text-align: center; font-size: 12px; color: #666; margin-top: 20px; }
@@ -73,28 +70,26 @@
         let device = null;
         let transport = null;
         let esploader = null;
-        let binaryArrayBuffer = null;
+        let fileBinaryData = null;
 
         function log(text) {
             consoleDiv.innerText += text + "\n";
             consoleDiv.scrollTop = consoleDiv.scrollHeight;
         }
 
-        // Terminal leeren
         consoleDiv.innerText = "";
 
-        // 1. Automatisch neueste Release-Firmware von GitHub laden
         async function fetchLatestRelease() {
             try {
                 log("🔍 Suche auf GitHub nach dem neuesten Release...");
                 const response = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`);
                 
-                if (!response.ok) throw new Error("Release konnte nicht geladen werden.");
+                if (!response.ok) throw new Error("Release API konnte nicht abgefragt werden.");
                 
                 const data = await response.json();
-                releaseInfo.innerText = `${data.name || data.tag_name} (${data.tag_name})`;
+                const releaseName = data.name || data.tag_name;
+                releaseInfo.innerText = releaseName;
 
-                // Suche nach der *-merged.bin Datei
                 const mergedAsset = data.assets.find(a => a.name.endsWith("merged.bin"));
 
                 if (!mergedAsset) {
@@ -104,23 +99,33 @@
                 }
 
                 fileInfo.innerText = `${mergedAsset.name} (${(mergedAsset.size / 1024 / 1024).toFixed(2)} MB)`;
-                log(`📥 Lade Firmware-Datei herunter: ${mergedAsset.name}...`);
+                log(`📥 Lade Firmware: ${mergedAsset.name}...`);
 
-                // Herunterladen der Binary direkt in den Arbeitsspeicher
-                const binResponse = await fetch(mergedAsset.browser_download_url);
-                binaryArrayBuffer = await binResponse.arrayBuffer();
+                // CORS-sicherer Download über GitHub API Endpoint
+                const binResponse = await fetch(mergedAsset.url, {
+                    headers: { 'Accept': 'application/octet-stream' }
+                });
 
-                log("✅ Firmware erfolgreich im Browser geladen! Bereit zum Flashen.");
+                if (!binResponse.ok) {
+                    // Fallback falls API Octet-Stream fehlschlägt
+                    const rawResponse = await fetch(mergedAsset.browser_download_url);
+                    if (!rawResponse.ok) throw new Error("Datei-Download blockiert (CORS).");
+                    const blob = await rawResponse.blob();
+                    fileBinaryData = await blob.arrayBuffer();
+                } else {
+                    fileBinaryData = await binResponse.arrayBuffer();
+                }
+
+                log("✅ Firmware erfolgreich geladen! Bereit zum Verbinden.");
                 connectBtn.disabled = false;
 
             } catch (err) {
                 console.error(err);
-                releaseInfo.innerText = "Fehler beim Laden!";
-                log("❌ Fehler beim Abrufen der GitHub-Release-Daten. Prüfe deine Internetverbindung.");
+                log("❌ Fehler beim Laden der Firmware-Datei: " + err.message);
+                fileInfo.innerText += " (Download-Fehler)";
             }
         }
 
-        // 2. Seriellen Port / ESP32 verbinden
         connectBtn.addEventListener('click', async () => {
             if (navigator.serial === undefined) {
                 alert("Dein Browser unterstützt kein Web Serial! Bitte benutze Google Chrome, Microsoft Edge oder Opera.");
@@ -150,23 +155,22 @@
 
             } catch (err) {
                 console.error(err);
-                log("❌ Verbindung abgebrochen oder fehlgeschlagen: " + err.message);
+                log("❌ Verbindung abgebrochen: " + err.message);
             }
         });
 
-        // 3. Firmware ab Adresse 0x0000 Flashen
         flashBtn.addEventListener('click', async () => {
-            if (!binaryArrayBuffer || !esploader) return;
+            if (!fileBinaryData || !esploader) return;
 
             try {
                 flashBtn.disabled = true;
                 progressContainer.style.display = "block";
                 progressBar.style.width = "0%";
                 
-                log("🚀 Starte Flash-Vorgang...");
+                log("🚀 Starte Flash-Vorgang (Offset 0x0000)...");
 
-                // Convert ArrayBuffer zu Binary-String für esptool-js
-                const bytes = new Uint8Array(binaryArrayBuffer);
+                // Konvertierung in Binärstring für esptool-js
+                const bytes = new Uint8Array(fileBinaryData);
                 let binaryString = "";
                 for (let i = 0; i < bytes.byteLength; i++) {
                     binaryString += String.fromCharCode(bytes[i]);
@@ -174,7 +178,7 @@
 
                 const fileArray = [{
                     data: binaryString,
-                    address: 0x0000 // Immer ab Adresse 0x0000
+                    address: 0x0000
                 }];
 
                 await esploader.writeFlash({
@@ -189,7 +193,7 @@
                 });
 
                 log("\n🎉 Flash-Vorgang ERFOLGREICH abgeschlossen!");
-                log("🔄 Der ESP32 startet jetzt neu...");
+                log("🔄 Der ESP32 wird neu gestartet...");
                 
                 await esploader.hardReset();
                 
@@ -201,7 +205,6 @@
             }
         });
 
-        // Starten
         fetchLatestRelease();
     </script>
 </body>
