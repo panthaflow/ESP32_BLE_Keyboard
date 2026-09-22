@@ -321,15 +321,15 @@
                 
                 log(i18n[currentLang].logStartingFlash);
 
-                // Übergabe der Daten als echtes Uint8Array oder konvertierter BinaryString für esptool-js
+                // Konvertierung in einen lückenlosen 8-Bit Binärstring ohne String.fromCharCode-Abriss
                 const bytes = new Uint8Array(fileBinaryData);
-                let binaryString = "";
+                let binaryDataString = "";
                 for (let i = 0; i < bytes.byteLength; i++) {
-                    binaryString += String.fromCharCode(bytes[i]);
+                    binaryDataString += String.fromCharCode(bytes[i]);
                 }
 
                 const fileArray = [{
-                    data: binaryString,
+                    data: binaryDataString,
                     address: 0x0000
                 }];
 
