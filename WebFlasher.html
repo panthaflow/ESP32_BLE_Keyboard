@@ -4,10 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ESP32-S3 Web Flasher & Terminal</title>
-    <!-- Offizielles Browser Bundle inkl. Buffer Polyfill -->
+    <!-- Node.js Buffer Polyfill für Browser-Kompatibilität von esptool-js -->
     <script src="https://cdn.jsdelivr.net/npm/buffer@6.0.3/index.min.js"></script>
     <script>
-        // Node.js Buffer Polyfill explizit für den Browser zuweisen
         if (typeof window.buffer !== 'undefined') {
             window.Buffer = window.buffer.Buffer;
         }
@@ -18,6 +17,8 @@
         h2 { margin-top: 0; color: #0066cc; }
         
         .status-box { background: #eef5fc; border-left: 4px solid #0066cc; padding: 12px; margin: 15px 0; border-radius: 0 4px 4px 0; font-size: 14px; }
+        .version-select { width: 100%; padding: 8px; margin-top: 5px; margin-bottom: 10px; font-size: 14px; border-radius: 4px; border: 1px solid #ccc; }
+        
         .progress-bar-container { width: 100%; background-color: #ddd; border-radius: 4px; overflow: hidden; height: 16px; margin-top: 10px; display: none; }
         .progress-bar { width: 0%; height: 100%; background-color: #4CAF50; transition: width 0.2s; }
         
@@ -36,11 +37,14 @@
 
     <div class="card">
         <h2>⚡ ESP32-S3 Web Flasher</h2>
-        <p>Flashe die neueste Firmware direkt aus dem Browser auf deinen ESP32-S3, ohne Dateien manuell herunterzuladen.</p>
+        <p>Flashe die Firmware direkt aus dem Browser auf deinen ESP32-S3. Standardmäßig ist die neueste Version gewählt.</p>
         
         <div class="status-box">
-            <strong>Gefundenes Release:</strong> <span id="releaseInfo">Suche nach neuem Release...</span><br>
-            <strong>Gefundene Datei:</strong> <span id="fileInfo">-</span>
+            <label for="releaseSelect"><strong>Gewähltes Release:</strong></label>
+            <select id="releaseSelect" class="version-select">
+                <option value="">Lade verfügbare Releases...</option>
+            </select>
+            <strong>Gefundene Datei:</strong> <span id="fileInfo">Lade Firmware-Informationen...</span>
         </div>
 
         <div>
@@ -68,9 +72,9 @@
         const REPO = "panthaflow/ESP32_BLE_Keyboard";
         const LOCAL_FIRMWARE_PATH = "ESP32_Keyboard_v1.0.1.ino.merged.bin";
         
+        const releaseSelect = document.getElementById('releaseSelect');
         const connectBtn = document.getElementById('connectBtn');
         const flashBtn = document.getElementById('flashBtn');
-        const releaseInfo = document.getElementById('releaseInfo');
         const fileInfo = document.getElementById('fileInfo');
         const consoleDiv = document.getElementById('console');
         const progressContainer = document.getElementById('progressContainer');
@@ -80,13 +84,13 @@
         let transport = null;
         let esploader = null;
         let fileBinaryData = null;
+        let releasesMap = {};
 
         function log(text) {
             consoleDiv.innerText += text + "\n";
             consoleDiv.scrollTop = consoleDiv.scrollHeight;
         }
 
-        // Trennen & Port sicher schließen
         async function disconnectPort() {
             try {
                 if (transport) {
@@ -107,51 +111,99 @@
 
         consoleDiv.innerText = "";
 
-        async function fetchLatestRelease() {
+        // Alle Releases von GitHub laden und im Dropdown anzeigen
+        async function fetchAllReleases() {
             try {
-                log("🔍 Suche nach Firmware-Datei...");
-
-                // 1. Primärversuch: Lokal laden
-                try {
-                    const localRes = await fetch(LOCAL_FIRMWARE_PATH);
-                    if (localRes.ok) {
-                        fileBinaryData = await localRes.arrayBuffer();
-                        releaseInfo.innerText = "v1.0.1 (Direktes Host-Release)";
-                        fileInfo.innerText = `${LOCAL_FIRMWARE_PATH} (${(fileBinaryData.byteLength / 1024 / 1024).toFixed(2)} MB)`;
-                        log("✅ Firmware direkt vom Server geladen!");
-                        connectBtn.disabled = false;
-                        return;
-                    }
-                } catch(e) {}
-
-                // 2. Sekundärversuch: GitHub Release API
-                const response = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`);
+                log("🔍 Suche auf GitHub nach verfügbaren Releases...");
+                const response = await fetch(`https://api.github.com/repos/${REPO}/releases`);
+                
                 if (!response.ok) throw new Error("Release API nicht erreichbar.");
                 
-                const data = await response.json();
-                releaseInfo.innerText = data.name || data.tag_name;
+                const releases = await response.json();
+                if (!releases || releases.length === 0) throw new Error("Keine Releases im Repo gefunden.");
 
-                const mergedAsset = data.assets.find(a => a.name.endsWith("merged.bin"));
-                if (!mergedAsset) throw new Error("Keine 'merged.bin' im Release vorhanden.");
+                releaseSelect.innerHTML = "";
+                releasesMap = {};
 
-                fileInfo.innerText = mergedAsset.name;
-                log(`📥 Lade Release-Datei: ${mergedAsset.name}...`);
+                releases.forEach((rel, index) => {
+                    const mergedAsset = rel.assets.find(a => a.name.endsWith("merged.bin"));
+                    if (mergedAsset) {
+                        const option = document.createElement('option');
+                        option.value = rel.tag_name;
+                        // Neueste Version markieren
+                        option.textContent = `${rel.name || rel.tag_name} ${index === 0 ? '(Neueste / Latest)' : ''}`;
+                        releaseSelect.appendChild(option);
+                        
+                        releasesMap[rel.tag_name] = mergedAsset;
+                    }
+                });
 
-                const proxyUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(mergedAsset.browser_download_url)}`;
+                if (Object.keys(releasesMap).length === 0) {
+                    throw new Error("Keine 'merged.bin' Dateien in den Releases gefunden.");
+                }
+
+                // Standardmäßig das neueste Release laden
+                const latestTag = releaseSelect.value;
+                loadSelectedFirmware(latestTag);
+
+            } catch (err) {
+                console.error(err);
+                log("ℹ️ Versuche lokale Firmware zu laden...");
+                tryFetchLocalFirmware();
+            }
+        }
+
+        async function tryFetchLocalFirmware() {
+            try {
+                const localRes = await fetch(LOCAL_FIRMWARE_PATH);
+                if (localRes.ok) {
+                    fileBinaryData = await localRes.arrayBuffer();
+                    releaseSelect.innerHTML = `<option>v1.0.1 (Direktes Host-Release)</option>`;
+                    fileInfo.innerText = `${LOCAL_FIRMWARE_PATH} (${(fileBinaryData.byteLength / 1024 / 1024).toFixed(2)} MB)`;
+                    log("✅ Firmware direkt vom Host geladen!");
+                    connectBtn.disabled = false;
+                } else {
+                    throw new Error("Lokale Firmware nicht gefunden.");
+                }
+            } catch(e) {
+                log("❌ Fehler: Keine Firmware konnte geladen werden.");
+                fileInfo.innerText = "Download-Fehler";
+            }
+        }
+
+        async function loadSelectedFirmware(tagName) {
+            const asset = releasesMap[tagName];
+            if (!asset) return;
+
+            connectBtn.disabled = true;
+            flashBtn.disabled = true;
+            fileBinaryData = null;
+            fileInfo.innerText = `${asset.name} (${(asset.size / 1024 / 1024).toFixed(2)} MB) - Lade...`;
+            log(`📥 Lade Firmware für Version ${tagName}: ${asset.name}...`);
+
+            try {
+                const proxyUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(asset.browser_download_url)}`;
                 const binResponse = await fetch(proxyUrl);
                 
                 if (!binResponse.ok) throw new Error("Download über Proxy fehlgeschlagen.");
 
                 fileBinaryData = await binResponse.arrayBuffer();
-                log("✅ Firmware erfolgreich über Proxy geladen!");
+                fileInfo.innerText = `${asset.name} (${(fileBinaryData.byteLength / 1024 / 1024).toFixed(2)} MB)`;
+                log(`✅ Firmware (${tagName}) erfolgreich geladen! Bereit zum Verbinden.`);
                 connectBtn.disabled = false;
 
             } catch (err) {
                 console.error(err);
-                log("❌ Fehler: " + err.message);
+                log("❌ Fehler beim Laden der Version " + tagName + ": " + err.message);
                 fileInfo.innerText = "Download-Fehler (CORS)";
             }
         }
+
+        releaseSelect.addEventListener('change', (e) => {
+            if (e.target.value) {
+                loadSelectedFirmware(e.target.value);
+            }
+        });
 
         connectBtn.addEventListener('click', async () => {
             if (navigator.serial === undefined) {
@@ -237,7 +289,7 @@
             }
         });
 
-        fetchLatestRelease();
+        fetchAllReleases();
     </script>
 </body>
 </html>
