@@ -21,8 +21,8 @@ Unterstützt einen extrem schnellen **Windows-Modus via Alt-Codes** sowie einen 
 
 ## 🛠️ Hardware-Voraussetzungen
 
-* **ESP32-S3 Board mit nativem USB** (Empfohlen: *Waveshare ESP32-GEEK*[cite: 1] oder *ESP32-S3 DevKitC*).
-* USB-Kabel / direkter USB-A-Port zum Ziel-System[cite: 1].
+* **ESP32-S3 Board mit nativem USB** (Empfohlen: *Waveshare ESP32-GEEK* oder *ESP32-S3 DevKitC*).
+* USB-Kabel / direkter USB-A-Port zum Ziel-System.
 
 ---
 
