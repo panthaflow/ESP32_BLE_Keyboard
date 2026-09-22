@@ -51,7 +51,7 @@
         <div class="status-box">
             <label for="releaseSelect"><strong data-i18n="labelSelectedRelease">Gewähltes Release:</strong></label>
             <select id="releaseSelect" class="version-select">
-                <option value="" data-i18n="optLoadingReleases">Lade verfügbare Releases...</option>
+                <option value="" data-i18n="optLoadingReleases">Lade verfügbare Firmware-Dateien...</option>
             </select>
             <strong data-i18n="labelFoundFile">Gefundene Datei:</strong> <span id="fileInfo" data-i18n="infoLoadingFirmware">Lade Firmware-Informationen...</span>
         </div>
@@ -79,12 +79,13 @@
         import { ESPLoader, Transport } from "https://unpkg.com/esptool-js@0.4.3/bundle.js";
 
         const REPO = "panthaflow/ESP32_BLE_Keyboard";
+        const FIRMWARE_DIR = "firmware";
         
         const i18n = {
             de: {
                 subtitle: "Flashe die Firmware direkt aus dem Browser auf deinen ESP32-S3. Standardmäßig ist die neueste Version gewählt.",
                 labelSelectedRelease: "Gewähltes Release:",
-                optLoadingReleases: "Lade verfügbare Releases...",
+                optLoadingReleases: "Lade verfügbare Firmware-Dateien...",
                 labelFoundFile: "Gefundene Datei:",
                 infoLoadingFirmware: "Lade Firmware-Informationen...",
                 btnConnect: "1. ESP32 Verbinden",
@@ -92,13 +93,11 @@
                 terminalTitle: "💻 Serieller Monitor (Terminal)",
                 footerRepo: "ESP32_BLE_Keyboard auf GitHub",
                 latestBadge: "(Neueste / Latest)",
-                logSearching: "🔍 Suche auf GitHub nach verfügbaren Releases...",
-                logTryLocal: "ℹ️ Versuche direkte lokale Firmware zu laden...",
-                logDirectLoaded: "✅ Firmware direkt vom Host-Server geladen!",
-                logNoFirmware: "❌ Fehler: Keine Firmware konnte geladen werden.",
-                logLoadingVersion: "📥 Lade Firmware für Version ",
-                logProxyLoaded: "✅ Firmware ({tag}) erfolgreich geladen! Bereit zum Verbinden.",
-                logProxyFailed: "❌ Fehler beim Laden der Version ",
+                logSearching: "🔍 Suche im Ordner 'firmware/' nach Firmware-Dateien...",
+                logNoFiles: "❌ Fehler: Keine .merged.bin Dateien im Ordner 'firmware/' gefunden.",
+                logLoadingFile: "📥 Lade Firmware: ",
+                logDirectLoaded: "✅ Firmware {file} erfolgreich geladen! Bereit zum Verbinden.",
+                logLoadFailed: "❌ Fehler beim Laden der Datei: ",
                 logConnecting: "🔌 Verbinde mit dem seriellen Port...",
                 logConnected: "✅ Erfolgreich mit dem ESP32 verbunden!",
                 logConnError: "❌ Verbindung abgebrochen / Fehler: ",
@@ -112,7 +111,7 @@
             en: {
                 subtitle: "Flash the firmware directly from your browser to your ESP32-S3. The latest version is selected by default.",
                 labelSelectedRelease: "Selected Release:",
-                optLoadingReleases: "Loading available releases...",
+                optLoadingReleases: "Loading available firmware files...",
                 labelFoundFile: "Found file:",
                 infoLoadingFirmware: "Loading firmware details...",
                 btnConnect: "1. Connect ESP32",
@@ -120,13 +119,11 @@
                 terminalTitle: "💻 Serial Monitor (Terminal)",
                 footerRepo: "ESP32_BLE_Keyboard on GitHub",
                 latestBadge: "(Latest)",
-                logSearching: "🔍 Searching GitHub for available releases...",
-                logTryLocal: "ℹ️ Attempting to load direct local firmware...",
-                logDirectLoaded: "✅ Firmware loaded directly from host server!",
-                logNoFirmware: "❌ Error: Could not load any firmware.",
-                logLoadingVersion: "📥 Downloading firmware for version ",
-                logProxyLoaded: "✅ Firmware ({tag}) successfully loaded! Ready to connect.",
-                logProxyFailed: "❌ Error loading version ",
+                logSearching: "🔍 Searching 'firmware/' directory for firmware files...",
+                logNoFiles: "❌ Error: No .merged.bin files found in 'firmware/' directory.",
+                logLoadingFile: "📥 Downloading firmware: ",
+                logDirectLoaded: "✅ Firmware {file} successfully loaded! Ready to connect.",
+                logLoadFailed: "❌ Error loading file: ",
                 logConnecting: "🔌 Connecting to serial port...",
                 logConnected: "✅ Successfully connected to ESP32!",
                 logConnError: "❌ Connection aborted / Error: ",
@@ -154,7 +151,7 @@
         let transport = null;
         let esploader = null;
         let fileBinaryData = null;
-        let releasesMap = {};
+        let firmwareFiles = [];
 
         function updateLanguage(lang) {
             currentLang = lang;
@@ -192,127 +189,94 @@
 
         consoleDiv.innerText = "";
 
-        async function fetchAllReleases() {
+        // Verzeichnis "firmware" auslesen und alle .merged.bin-Dateien finden
+        async function fetchFirmwareFolder() {
             try {
                 log(i18n[currentLang].logSearching);
-                const response = await fetch(`https://api.github.com/repos/${REPO}/releases`);
+                const response = await fetch(`https://api.github.com/repos/${REPO}/contents/${FIRMWARE_DIR}`);
                 
-                if (!response.ok) throw new Error("Release API error");
+                if (!response.ok) throw new Error("Could not fetch contents of 'firmware' folder.");
                 
-                const releases = await response.json();
-                if (!releases || releases.length === 0) throw new Error("No releases found.");
+                const files = await response.json();
+                
+                // Nur .merged.bin Dateien filtern
+                firmwareFiles = files.filter(f => f.name.endsWith(".merged.bin"));
 
-                releaseSelect.innerHTML = "";
-                releasesMap = {};
-
-                releases.forEach((rel, index) => {
-                    const mergedAsset = rel.assets.find(a => a.name.endsWith("merged.bin"));
-                    if (mergedAsset) {
-                        const option = document.createElement('option');
-                        option.value = rel.tag_name;
-                        option.textContent = `${rel.name || rel.tag_name} ${index === 0 ? i18n[currentLang].latestBadge : ''}`;
-                        releaseSelect.appendChild(option);
-                        
-                        releasesMap[rel.tag_name] = mergedAsset;
-                    }
-                });
-
-                if (Object.keys(releasesMap).length === 0) {
-                    throw new Error("No merged.bin assets found.");
+                if (firmwareFiles.length === 0) {
+                    log(i18n[currentLang].logNoFiles);
+                    fileInfo.innerText = "Keine Dateien gefunden";
+                    return;
                 }
 
-                const latestTag = releaseSelect.value;
-                loadSelectedFirmware(latestTag);
+                // Sortieren: Höchste Versionsnummer nach oben (z.B. v1.0.1 vor v1.0.0)
+                firmwareFiles.sort((a, b) => b.name.localeCompare(a.name));
+
+                releaseSelect.innerHTML = "";
+                firmwareFiles.forEach((file, index) => {
+                    const option = document.createElement('option');
+                    option.value = file.name;
+                    
+                    // Extrahiere lesbare Version aus Dateiname (z. B. v1.0.1)
+                    const verMatch = file.name.match(/v\d+\.\d+\.\d+/);
+                    const label = verMatch ? verMatch[0] : file.name;
+                    
+                    option.textContent = `${label} (${file.name}) ${index === 0 ? i18n[currentLang].latestBadge : ''}`;
+                    releaseSelect.appendChild(option);
+                });
+
+                // Standardmäßig die neueste Datei laden
+                loadFirmwareFile(firmwareFiles[0].name);
 
             } catch (err) {
                 console.error(err);
-                log(i18n[currentLang].logTryLocal);
-                tryFetchLocalFirmware();
+                log("❌ Fehler: " + err.message);
+                fileInfo.innerText = "Fehler beim Laden";
             }
         }
 
-        async function tryFetchLocalFirmware() {
-            try {
-                // Versuche die Datei direkt vom Webserver/Repository zu laden
-                const localRes = await fetch("ESP32_Keyboard_v1.0.1.ino.merged.bin");
-                if (localRes.ok) {
-                    fileBinaryData = await localRes.arrayBuffer();
-                    releaseSelect.innerHTML = `<option>v1.0.1 (Direct Host Release)</option>`;
-                    fileInfo.innerText = `ESP32_Keyboard_v1.0.1.ino.merged.bin (${(fileBinaryData.byteLength / 1024 / 1024).toFixed(2)} MB)`;
-                    log(i18n[currentLang].logDirectLoaded);
-                    connectBtn.disabled = false;
-                } else {
-                    throw new Error("Local firmware missing");
-                }
-            } catch(e) {
-                log(i18n[currentLang].logNoFirmware);
-                fileInfo.innerText = "Download Error (CORS)";
-            }
-        }
-
-        async function loadSelectedFirmware(tagName) {
-            const asset = releasesMap[tagName];
-            if (!asset) return;
-
+        async function loadFirmwareFile(fileName) {
             connectBtn.disabled = true;
             flashBtn.disabled = true;
             fileBinaryData = null;
-            fileInfo.innerText = `${asset.name} (${(asset.size / 1024 / 1024).toFixed(2)} MB) - Loading...`;
-            log(i18n[currentLang].logLoadingVersion + tagName + `: ${asset.name}...`);
+            
+            const filePath = `${FIRMWARE_DIR}/${fileName}`;
+            fileInfo.innerText = `${fileName} - Loading...`;
+            log(i18n[currentLang].logLoadingFile + filePath + "...");
 
-            // 1. Direktversuch: Datei aus dem lokalen Host-Pfad laden
             try {
-                const directRes = await fetch(asset.name);
-                if (directRes.ok) {
-                    fileBinaryData = await directRes.arrayBuffer();
-                    fileInfo.innerText = `${asset.name} (${(fileBinaryData.byteLength / 1024 / 1024).toFixed(2)} MB)`;
-                    log(i18n[currentLang].logDirectLoaded);
-                    connectBtn.disabled = false;
-                    return;
-                }
-            } catch (e) {
-                // Bei Misserfolg über Fallback-Proxies gehen
+                // Direkt über GitHub Pages (gleiche Domain) ohne CORS-Sperren laden!
+                const res = await fetch(filePath);
+                if (!res.ok) throw new Error(`HTTP Status ${res.status}`);
+
+                fileBinaryData = await res.arrayBuffer();
+                fileInfo.innerText = `${fileName} (${(fileBinaryData.byteLength / 1024 / 1024).toFixed(2)} MB)`;
+                
+                const loadedMsg = i18n[currentLang].logDirectLoaded.replace('{file}', fileName);
+                log(loadedMsg);
+                connectBtn.disabled = false;
+
+            } catch (err) {
+                console.error(err);
+                log(i18n[currentLang].logLoadFailed + err.message);
+                fileInfo.innerText = "Download Error";
             }
-
-            // 2. Fallback: Proxy-Download
-            const proxies = [
-                `https://api.allorigins.win/raw?url=${encodeURIComponent(asset.browser_download_url)}`,
-                `https://corsproxy.io/?${encodeURIComponent(asset.browser_download_url)}`
-            ];
-
-            for (const proxyUrl of proxies) {
-                try {
-                    const binResponse = await fetch(proxyUrl);
-                    if (binResponse.ok) {
-                        fileBinaryData = await binResponse.arrayBuffer();
-                        fileInfo.innerText = `${asset.name} (${(fileBinaryData.byteLength / 1024 / 1024).toFixed(2)} MB)`;
-                        const loadedMsg = i18n[currentLang].logProxyLoaded.replace('{tag}', tagName);
-                        log(loadedMsg);
-                        connectBtn.disabled = false;
-                        return;
-                    }
-                } catch (err) {
-                    console.warn("Proxy failed, trying next...", err);
-                }
-            }
-
-            log(i18n[currentLang].logProxyFailed + tagName);
-            fileInfo.innerText = "Download Error (CORS)";
         }
 
         langSelect.addEventListener('change', (e) => {
             updateLanguage(e.target.value);
+            // Badge im Dropdown aktualisieren
             const firstOption = releaseSelect.options[0];
-            if (firstOption && firstOption.value) {
-                const tagName = firstOption.value;
-                const cleanName = releasesMap[tagName] ? (releasesMap[tagName].name || tagName) : tagName;
-                firstOption.textContent = `${cleanName} ${i18n[currentLang].latestBadge}`;
+            if (firstOption && firmwareFiles[0]) {
+                const file = firmwareFiles[0];
+                const verMatch = file.name.match(/v\d+\.\d+\.\d+/);
+                const label = verMatch ? verMatch[0] : file.name;
+                firstOption.textContent = `${label} (${file.name}) ${i18n[currentLang].latestBadge}`;
             }
         });
 
         releaseSelect.addEventListener('change', (e) => {
             if (e.target.value) {
-                loadSelectedFirmware(e.target.value);
+                loadFirmwareFile(e.target.value);
             }
         });
 
@@ -401,7 +365,7 @@
         });
 
         updateLanguage(currentLang);
-        fetchAllReleases();
+        fetchFirmwareFolder();
     </script>
 </body>
 </html>
