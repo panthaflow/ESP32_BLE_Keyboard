@@ -5,10 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ESP32-S3 Web Flasher & Terminal</title>
 
-    <!-- Node.js Buffer Polyfill - ZWINGEND vor esptool-js laden -->
+    <!-- Node.js Buffer Polyfill -->
     <script src="https://bundle.run/buffer@6.0.3"></script>
     <script>
-        // Globales Buffer-Objekt für den Browser bereitstellen
         if (typeof window.buffer !== 'undefined') {
             window.Buffer = window.buffer.Buffer;
         }
@@ -322,12 +321,11 @@
                 
                 log(i18n[currentLang].logStartingFlash);
 
-                // Sichere Binary-Konvertierung
-                let binaryString = "";
+                // Übergabe der Daten als echtes Uint8Array oder konvertierter BinaryString für esptool-js
                 const bytes = new Uint8Array(fileBinaryData);
-                const chunkSize = 0x8000;
-                for (let i = 0; i < bytes.length; i += chunkSize) {
-                    binaryString += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+                let binaryString = "";
+                for (let i = 0; i < bytes.byteLength; i++) {
+                    binaryString += String.fromCharCode(bytes[i]);
                 }
 
                 const fileArray = [{
