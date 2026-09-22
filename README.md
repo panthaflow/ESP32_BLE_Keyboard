@@ -2,7 +2,7 @@
 
 ![License](https://img.shields.io/github/license/panthaflow/ESP32_BLE_Keyboard?color=blue) &nbsp;&nbsp;&nbsp; ![Stars](https://img.shields.io/github/stars/panthaflow/ESP32_BLE_Keyboard?style=social) &nbsp;&nbsp;&nbsp; ![Release](https://img.shields.io/github/v/release/panthaflow/ESP32_BLE_Keyboard?color=green) &nbsp;&nbsp;&nbsp; ![ESP32-S3](https://img.shields.io/badge/Hardware-ESP32--S3-orange)
 
-[English](#-english) | [Deutsch](#-deutsch)
+[English](#-english) | [Deutsch](#-deutsch) | [🌐 Live Demo](https://panthaflow.github.io/ESP32_BLE_Keyboard/)
 
 ---
 
@@ -13,12 +13,14 @@ The device connects via **Web Bluetooth** directly through any modern web browse
 
 Supports a lightning-fast **Windows mode via Alt codes** and a **BIOS Boot Protocol mode** for direct input in server BIOS, UEFI, iDRAC/iLO, and pre-boot environments.
 
+> 🚀 **Try it out directly:** Launch the [Web Bluetooth Control Panel (Live Demo)](https://panthaflow.github.io/ESP32_BLE_Keyboard/) in your browser.
+
 ---
 
 ### ✨ Features
 
 * **⚡ Native USB HID Stack:** Uses `Adafruit_TinyUSB` for maximum compatibility with legacy systems and server BIOS environments.
-* **🌐 Browser Control via Web Bluetooth:** No app installation required. Simply open the included `index.html` (e.g., via GitHub Pages or locally) and connect instantly.
+* **🌐 Browser Control via Web Bluetooth:** No app installation required. Simply open the included web interface (or use the [Live Demo](https://panthaflow.github.io/ESP32_BLE_Keyboard/)) and connect instantly.
 * **🔄 Two Operating Modes:**
   * **BIOS Mode:** Forces the USB Boot Protocol, adds artificial delays to keypresses, and maps input precisely to the US QWERTY keyboard layout.
   * **Windows Mode:** Sends characters at high speed via Numpad Alt codes (~35 ms per character). Guarantees accurate character transmission regardless of the target PC's set keyboard layout.
@@ -81,12 +83,14 @@ Das Gerät verbindet sich per **Web Bluetooth** direkt über den Webbrowser (ohn
 
 Unterstützt einen extrem schnellen **Windows-Modus via Alt-Codes** sowie einen **BIOS-Boot-Protocol-Modus** für direkte Eingaben in Server-BIOS-, UEFI- und Pre-Boot-Umgebungen.
 
+> 🚀 **Direkt ausprobieren:** Öffne das [Web Bluetooth Control Panel (Live Demo)](https://panthaflow.github.io/ESP32_BLE_Keyboard/) direkt in deinem Browser.
+
 ---
 
 ### ✨ Features
 
 * **⚡ Nativer USB-HID-Stack:** Verwendet `Adafruit_TinyUSB` für maximale Kompatibilität mit alten Systemen und Server-BIOS.
-* **🌐 Browser-Steuerung via Web Bluetooth:** Keine App-Installation nötig. Einfach die mitgelieferte `index.html` aufrufen (z. B. via GitHub Pages auf dem Smartphone) und sofort verbinden.
+* **🌐 Browser-Steuerung via Web Bluetooth:** Keine App-Installation nötig. Einfach die [Live Demo](https://panthaflow.github.io/ESP32_BLE_Keyboard/) aufrufen (oder die mitgelieferte `index.html` lokal nutzen) und sofort verbinden.
 * **🔄 Zwei Betriebsmodi:**
   * **BIOS-Modus:** Erzwingt das USB-Boot-Protokoll, verlangsamt die Tastenanschläge künstlich und mappt Eingaben präzise auf das englische US-Layout.
   * **Windows-Modus:** Sendet Zeichen blitzschnell via Numpad-Alt-Codes (ca. 35 ms pro Zeichen). Garantiert korrekte Zeichenübertragung unabhängig vom Tastaturlayout des Ziel-PCs.
