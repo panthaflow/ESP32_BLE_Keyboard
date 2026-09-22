@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESP32 Bluetooth Tastatur</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 500px; margin: auto; }
+        textarea { width: 100%; height: 100px; margin-bottom: 10px; font-size: 16px; padding: 5px;}
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; margin-right: 10px; margin-bottom: 10px;}
+        
+        #cadBtn { background-color: #ff4d4d; color: white; border: none; border-radius: 4px; }
+        #cadBtn:disabled { background-color: #ffb3b3; cursor: not-allowed; }
+        
+        #enterBtn { background-color: #4CAF50; color: white; border: none; border-radius: 4px; }
+        #enterBtn:disabled { background-color: #a5d6a7; cursor: not-allowed; }
+        
+        #status { margin-top: 20px; color: gray; font-weight: bold;}
+        
+        details { margin-bottom: 20px; padding: 10px; background-color: #f9f9f9; border-radius: 4px; border: 1px solid #ddd; }
+        summary { cursor: pointer; font-weight: bold; margin-bottom: 5px; }
+        .settings-content { margin-top: 10px; }
+        .setting-row { margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; }
+
+        /* Styling für den Schieberegler (Toggle Switch) */
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #4CAF50; }
+        input:checked + .slider:before { transform: translateX(20px); }
+    </style>
+</head>
+<body>
+
+    <h2>ESP32 Remote Keyboard</h2>
+    
+    <button id="connectBtn">1. Bluetooth Verbinden</button>
+    <br><br>
+    
+    <details>
+        <summary>⚙️ Erweiterte Einstellungen</summary>
+        <div class="settings-content">
+            <div class="setting-row">
+                <label for="delayInput">Verzögerung (in Sekunden): </label>
+                <input type="number" id="delayInput" value="0" min="0" max="60" style="width: 60px; padding: 5px; font-size: 16px;">
+            </div>
+            <div class="setting-row">
+                <span>Text nach Senden löschen: </span>
+                <label class="switch">
+                    <input type="checkbox" id="clearTextToggle" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <hr style="border: 0; border-top: 1px solid #ddd; margin: 15px 0;">
+            <div class="setting-row">
+                <span><strong>Modus: BIOS</strong> (Standard US-Layout): </span>
+                <label class="switch">
+                    <!-- Aus = Windows Alt-Codes | An = BIOS US-Layout -->
+                    <input type="checkbox" id="biosToggle">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+    </details>
+
+    <textarea id="textInput" placeholder="Hier Text eingeben..." spellcheck="false" autocorrect="off" autocapitalize="off"></textarea>
+    
+    <div>
+        <button id="sendBtn" disabled>2. Text Senden</button>
+        <button id="cadBtn" disabled>Strg + Alt + Entf</button>
+        <button id="enterBtn" disabled>↩️ Enter</button>
+    </div>
+
+    <div id="status">Status: Nicht verbunden</div>
+
+    <script>
+        const connectBtn = document.getElementById('connectBtn');
+        const sendBtn = document.getElementById('sendBtn');
+        const cadBtn = document.getElementById('cadBtn');
+        const enterBtn = document.getElementById('enterBtn');
+        const textInput = document.getElementById('textInput');
+        const statusDiv = document.getElementById('status');
+        
+        const delayInput = document.getElementById('delayInput');
+        const clearTextToggle = document.getElementById('clearTextToggle');
+        const biosToggle = document.getElementById('biosToggle');
+
+        const serviceUuid = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
+        const characteristicUuid = "beb5483e-36e1-4688-b7f5-ea07361b26a8";
+
+        let bleCharacteristic = null;
+
+        connectBtn.addEventListener('click', async () => {
+            try {
+                statusDiv.innerText = "Status: Suche nach Geräten...";
+                const device = await navigator.bluetooth.requestDevice({
+                    filters: [{ name: 'ESP32-S3 Keyboard' }],
+                    optionalServices: [serviceUuid]
+                });
+
+                statusDiv.innerText = "Status: Verbinde mit " + device.name + "...";
+                const server = await device.gatt.connect();
+                
+                const service = await server.getPrimaryService(serviceUuid);
+                bleCharacteristic = await service.getCharacteristic(characteristicUuid);
+
+                statusDiv.innerText = "Status: Verbunden! Du kannst jetzt senden.";
+                statusDiv.style.color = "green";
+                
+                sendBtn.disabled = false;
+                cadBtn.disabled = false;
+                enterBtn.disabled = false;
+
+                device.addEventListener('gattserverdisconnected', () => {
+                    statusDiv.innerText = "Status: Verbindung verloren.";
+                    statusDiv.style.color = "red";
+                    
+                    sendBtn.disabled = true;
+                    cadBtn.disabled = true;
+                    enterBtn.disabled = true;
+                });
+
+            } catch (error) {
+                console.error(error);
+                statusDiv.innerText = "Status: Fehler beim Verbinden.";
+                statusDiv.style.color = "red";
+            }
+        });
+
+        // Hilfsfunktion um schnell einen Befehl zu senden (ohne die Verzögerungslogik)
+        async function sendRawCommand(cmdStr) {
+            if (!bleCharacteristic) return;
+            const encoder = new TextEncoder();
+            await bleCharacteristic.writeValue(encoder.encode(cmdStr));
+        }
+
+        async function sendDataWithDelay(dataString) {
+            if (!bleCharacteristic) return;
+            
+            // 1. Verzögerung prüfen und abwarten
+            const delaySeconds = parseFloat(delayInput.value) || 0;
+            const delayMs = delaySeconds * 1000;
+
+            if (delayMs > 0) {
+                statusDiv.innerText = `Status: Warte ${delaySeconds} Sekunden...`;
+                statusDiv.style.color = "orange";
+                await new Promise(resolve => setTimeout(resolve, delayMs));
+                statusDiv.innerText = "Status: Verbunden! Du kannst jetzt senden.";
+                statusDiv.style.color = "green";
+            }
+
+            try {
+                // 2. Dem ESP32 den aktuellen Modus mitteilen (WIN oder BIOS)
+                const modeCmd = biosToggle.checked ? "CMD:BIOS" : "CMD:WIN";
+                await sendRawCommand(modeCmd);
+                
+                // Kurze Pause, damit der ESP32 den Modus umschalten kann, bevor die Daten kommen
+                await new Promise(resolve => setTimeout(resolve, 100));
+
+                // 3. Wenn es ein Systembefehl (CMD:...) ist, direkt senden
+                if (dataString.startsWith("CMD:")) {
+                    await sendRawCommand(dataString);
+                    return;
+                }
+
+                // 4. Wenn es Text ist: "Schlaue" Anführungszeichen durch normale ersetzen
+                let cleanText = dataString;
+                cleanText = cleanText.replace(/[\u2018\u2019‚]/g, "'"); 
+                cleanText = cleanText.replace(/[\u201C\u201D„]/g, '"'); 
+
+                // Umwandlung in Single-Bytes (wichtig für den Windows Alt-Code Modus)
+                const data = new Uint8Array(cleanText.length);
+                for (let i = 0; i < cleanText.length; i++) {
+                    let charCode = cleanText.charCodeAt(i);
+                    if (charCode > 255) charCode = 63; // Unbekanntes Zeichen wird zu "?"
+                    data[i] = charCode;
+                }
+
+                await bleCharacteristic.writeValue(data);
+            } catch (error) {
+                console.error(error);
+                alert("Fehler beim Senden!");
+            }
+        }
+
+        sendBtn.addEventListener('click', async () => {
+            const text = textInput.value;
+            if (text.length === 0) return;
+            
+            await sendDataWithDelay(text);
+            
+            if (clearTextToggle.checked) {
+                textInput.value = ''; 
+            }
+        });
+
+        cadBtn.addEventListener('click', async () => {
+            await sendDataWithDelay("CMD:CAD");
+        });
+
+        enterBtn.addEventListener('click', async () => {
+            await sendDataWithDelay("CMD:ENTER");
+        });
+    </script>
+</body>
+</html>
