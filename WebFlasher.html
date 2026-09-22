@@ -4,8 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ESP32-S3 Web Flasher & Terminal</title>
-    <!-- Buffer Polyfill für Browser-Kompatibilität von esptool-js -->
-    <script src="https://unpkg.com/buffer@6.0.3/index.js"></script>
+    <!-- Offizielles Browser Bundle inkl. Buffer Polyfill -->
+    <script src="https://cdn.jsdelivr.net/npm/buffer@6.0.3/index.min.js"></script>
+    <script>
+        // Node.js Buffer Polyfill explizit für den Browser zuweisen
+        if (typeof window.buffer !== 'undefined') {
+            window.Buffer = window.buffer.Buffer;
+        }
+    </script>
     <style>
         body { font-family: Arial, sans-serif; max-width: 650px; margin: 20px auto; padding: 20px; background: #f4f6f8; color: #333; }
         .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
@@ -27,13 +33,6 @@
     </style>
 </head>
 <body>
-
-    <script>
-        // Globaler Buffer-Fix für den Browser
-        if (typeof window.Buffer === 'undefined') {
-            window.Buffer = buffer.Buffer;
-        }
-    </script>
 
     <div class="card">
         <h2>⚡ ESP32-S3 Web Flasher</h2>
@@ -160,7 +159,6 @@
                 return;
             }
 
-            // Sicherstellen, dass alte Verbindungen vor Neuverbindung geschlossen sind
             await disconnectPort();
 
             try {
@@ -188,7 +186,7 @@
                 console.error(err);
                 log("❌ Verbindung abgebrochen / Fehler: " + err.message);
                 log("🔄 Schließe seriellen Port...");
-                await disconnectPort(); // Schließt den Port bei Verbindungs-/Stub-Fehlern
+                await disconnectPort();
             }
         });
 
@@ -235,7 +233,7 @@
                 log("\n❌ Fehler beim Flashen: " + err.message);
             } finally {
                 log("🔌 Schließe seriellen Port...");
-                await disconnectPort(); // Port nach Erfolg oder Fehler immer wieder freigeben
+                await disconnectPort();
             }
         });
 
