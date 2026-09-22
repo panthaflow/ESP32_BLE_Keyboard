@@ -12,6 +12,12 @@
         .header-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .lang-select { padding: 5px 8px; font-size: 14px; border-radius: 4px; border: 1px solid #ccc; cursor: pointer; }
 
+        /* Update Meldung - Standardmäßig versteckt */
+        .info-box { display: none; background-color: #eef5fc; border-left: 4px solid #0066cc; padding: 12px; margin-bottom: 20px; font-size: 14px; border-radius: 0 4px 4px 0; }
+        .info-box strong { color: #0066cc; display: block; margin-bottom: 5px; }
+        .info-box a { color: #0066cc; text-decoration: none; font-weight: bold; display: inline-block; margin-top: 5px; }
+        .info-box a:hover { text-decoration: underline; }
+
         #cadBtn { background-color: #ff4d4d; color: white; border: none; border-radius: 4px; }
         #cadBtn:disabled { background-color: #ffb3b3; cursor: not-allowed; }
         
@@ -49,6 +55,13 @@
         </select>
     </div>
     
+    <!-- Update Hinweis (wird per JS eingeblendet, wenn neue Firmware verfügbar ist) -->
+    <div id="updateAlert" class="info-box">
+        <strong data-i18n="updateTitle">🚀 Neue Firmware verfügbar!</strong>
+        <span id="versionNumbers"></span><br>
+        <a href="https://panthaflow.github.io/ESP32_BLE_Keyboard/WebFlasher.html" target="_blank" data-i18n="updateLink">Jetzt über den Web Flasher aktualisieren</a>
+    </div>
+
     <button id="connectBtn" data-i18n="btnConnect">1. Bluetooth Verbinden</button>
     <br><br>
     
@@ -70,7 +83,6 @@
             <div class="setting-row">
                 <span data-i18n="labelBios"><strong>Modus: BIOS</strong> (Standard US-Layout): </span>
                 <label class="switch">
-                    <!-- Aus = Windows Alt-Codes | An = BIOS US-Layout -->
                     <input type="checkbox" id="biosToggle">
                     <span class="slider"></span>
                 </label>
@@ -97,9 +109,12 @@
     </footer>
 
     <script>
-        // Sprachressourcen (Internationalisierung)
         const i18n = {
             de: {
+                updateTitle: "🚀 Neue Firmware verfügbar!",
+                updateLink: "Jetzt über den Web Flasher aktualisieren",
+                installedStr: "Installiert: v",
+                newStr: "Neu: v",
                 btnConnect: "1. Bluetooth Verbinden",
                 settingsTitle: "⚙️ Erweiterte Einstellungen",
                 labelDelay: "Verzögerung (in Sekunden): ",
@@ -121,6 +136,10 @@
                 footerReportLink: "Hier melden"
             },
             en: {
+                updateTitle: "🚀 New Firmware Available!",
+                updateLink: "Update now using the Web Flasher",
+                installedStr: "Installed: v",
+                newStr: "New: v",
                 btnConnect: "1. Connect Bluetooth",
                 settingsTitle: "⚙️ Advanced Settings",
                 labelDelay: "Delay (in seconds): ",
@@ -152,6 +171,8 @@
         const enterBtn = document.getElementById('enterBtn');
         const textInput = document.getElementById('textInput');
         const statusDiv = document.getElementById('status');
+        const updateAlert = document.getElementById('updateAlert');
+        const versionNumbers = document.getElementById('versionNumbers');
         
         const delayInput = document.getElementById('delayInput');
         const clearTextToggle = document.getElementById('clearTextToggle');
@@ -162,8 +183,8 @@
 
         let bleCharacteristic = null;
         let isConnected = false;
+        let latestGithubVersion = null; // Speichert die abgerufene GitHub-Version zwischen
 
-        // Funktion zum Umschalten aller Oberflächentexte
         function updateLanguage(lang) {
             currentLang = lang;
             localStorage.setItem('appLang', lang);
@@ -179,7 +200,6 @@
                 if (i18n[lang][key]) el.placeholder = i18n[lang][key];
             });
 
-            // Statusmeldung dynamisch aktualisieren, falls nicht verbunden
             if (!isConnected && bleCharacteristic === null) {
                 statusDiv.innerText = i18n[currentLang].statusDisconnected;
             }
@@ -189,10 +209,56 @@
             updateLanguage(e.target.value);
         });
 
+        // Event-Handler für eingehende Nachrichten vom ESP32
+        function handleNotifications(event) {
+            const value = event.target.value;
+            const decoder = new TextDecoder('utf-8');
+            const message = decoder.decode(value);
+
+            // Prüfen, ob die Nachricht die Versionsantwort ist
+            if (message.startsWith("VER:")) {
+                const deviceVersion = message.replace("VER:", "").trim();
+                
+                if (latestGithubVersion && deviceVersion) {
+                    // Vergleicht die Strings semantisch (gibt > 0 zurück, wenn latestGithubVersion neuer ist)
+                    if (latestGithubVersion.localeCompare(deviceVersion, undefined, { numeric: true, sensitivity: 'base' }) > 0) {
+                        updateAlert.style.display = 'block';
+                        versionNumbers.innerText = `(${i18n[currentLang].installedStr}${deviceVersion} -> ${i18n[currentLang].newStr}${latestGithubVersion})`;
+                    }
+                }
+            }
+        }
+
+        // Ruft die neueste Version von GitHub ab und fragt dann den ESP nach seiner Version
+        async function checkForUpdates() {
+            try {
+                // 1. Hole neueste Version aus dem GitHub Repo
+                const response = await fetch(`https://api.github.com/repos/panthaflow/ESP32_BLE_Keyboard/contents/firmware`);
+                const files = await response.json();
+                const firmwareFiles = files.filter(f => f.name.endsWith(".merged.bin"));
+                firmwareFiles.sort((a, b) => b.name.localeCompare(a.name));
+                
+                if (firmwareFiles.length > 0) {
+                    const match = firmwareFiles[0].name.match(/v(\d+\.\d+\.\d+)/);
+                    if (match) latestGithubVersion = match[1];
+                }
+
+                // 2. Fordere die aktuelle Version vom ESP an
+                // Kurze Verzögerung, um sicherzustellen, dass Notifications bereit sind
+                setTimeout(async () => {
+                    await sendRawCommand("CMD:GET_VER");
+                }, 200);
+
+            } catch (error) {
+                console.error("Fehler beim Abrufen der Updates von GitHub:", error);
+            }
+        }
+
         connectBtn.addEventListener('click', async () => {
             try {
                 statusDiv.innerText = i18n[currentLang].statusSearching;
                 statusDiv.style.color = "gray";
+                updateAlert.style.display = 'none';
 
                 const device = await navigator.bluetooth.requestDevice({
                     filters: [{ name: 'ESP32-S3 Keyboard' }],
@@ -205,6 +271,10 @@
                 const service = await server.getPrimaryService(serviceUuid);
                 bleCharacteristic = await service.getCharacteristic(characteristicUuid);
 
+                // Notifications abonnieren
+                await bleCharacteristic.startNotifications();
+                bleCharacteristic.addEventListener('characteristicvaluechanged', handleNotifications);
+
                 isConnected = true;
                 statusDiv.innerText = i18n[currentLang].statusConnected;
                 statusDiv.style.color = "green";
@@ -213,11 +283,15 @@
                 cadBtn.disabled = false;
                 enterBtn.disabled = false;
 
+                // Starte Update-Prüfung
+                checkForUpdates();
+
                 device.addEventListener('gattserverdisconnected', () => {
                     isConnected = false;
                     bleCharacteristic = null;
                     statusDiv.innerText = i18n[currentLang].statusLost;
                     statusDiv.style.color = "red";
+                    updateAlert.style.display = 'none';
                     
                     sendBtn.disabled = true;
                     cadBtn.disabled = true;
@@ -299,7 +373,6 @@
             await sendDataWithDelay("CMD:ENTER");
         });
 
-        // Initiales Laden der Sprache
         updateLanguage(currentLang);
     </script>
 </body>
