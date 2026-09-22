@@ -4,13 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ESP32-S3 Web Flasher & Terminal</title>
-    <!-- Node.js Buffer Polyfill für Browser-Kompatibilität von esptool-js -->
-    <script src="https://cdn.jsdelivr.net/npm/buffer@6.0.3/index.min.js"></script>
+    
+    <!-- Vollständiges Node.js Buffer Polyfill für Browser (MUSS vor esptool-js geladen werden) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/buffer/6.0.3/buffer.min.js"></script>
     <script>
+        // Globales Buffer-Objekt sicherstellen
         if (typeof window.buffer !== 'undefined') {
             window.Buffer = window.buffer.Buffer;
+        } else if (typeof buffer !== 'undefined') {
+            window.Buffer = buffer.Buffer;
         }
     </script>
+
     <style>
         body { font-family: Arial, sans-serif; max-width: 650px; margin: 20px auto; padding: 20px; background: #f4f6f8; color: #333; }
         .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
@@ -189,7 +194,6 @@
 
         consoleDiv.innerText = "";
 
-        // Verzeichnis "firmware" auslesen und alle .merged.bin-Dateien finden
         async function fetchFirmwareFolder() {
             try {
                 log(i18n[currentLang].logSearching);
@@ -198,8 +202,6 @@
                 if (!response.ok) throw new Error("Could not fetch contents of 'firmware' folder.");
                 
                 const files = await response.json();
-                
-                // Nur .merged.bin Dateien filtern
                 firmwareFiles = files.filter(f => f.name.endsWith(".merged.bin"));
 
                 if (firmwareFiles.length === 0) {
@@ -208,7 +210,6 @@
                     return;
                 }
 
-                // Sortieren: Höchste Versionsnummer nach oben (z.B. v1.0.1 vor v1.0.0)
                 firmwareFiles.sort((a, b) => b.name.localeCompare(a.name));
 
                 releaseSelect.innerHTML = "";
@@ -216,7 +217,6 @@
                     const option = document.createElement('option');
                     option.value = file.name;
                     
-                    // Extrahiere lesbare Version aus Dateiname (z. B. v1.0.1)
                     const verMatch = file.name.match(/v\d+\.\d+\.\d+/);
                     const label = verMatch ? verMatch[0] : file.name;
                     
@@ -224,7 +224,6 @@
                     releaseSelect.appendChild(option);
                 });
 
-                // Standardmäßig die neueste Datei laden
                 loadFirmwareFile(firmwareFiles[0].name);
 
             } catch (err) {
@@ -244,7 +243,6 @@
             log(i18n[currentLang].logLoadingFile + filePath + "...");
 
             try {
-                // Direkt über GitHub Pages (gleiche Domain) ohne CORS-Sperren laden!
                 const res = await fetch(filePath);
                 if (!res.ok) throw new Error(`HTTP Status ${res.status}`);
 
@@ -264,7 +262,6 @@
 
         langSelect.addEventListener('change', (e) => {
             updateLanguage(e.target.value);
-            // Badge im Dropdown aktualisieren
             const firstOption = releaseSelect.options[0];
             if (firstOption && firmwareFiles[0]) {
                 const file = firmwareFiles[0];
@@ -327,11 +324,17 @@
                 
                 log(i18n[currentLang].logStartingFlash);
 
-                const bytes = new Uint8Array(fileBinaryData);
+                // Konvertierung mit Unterstützung von Buffer.from
                 let binaryString = "";
-                const chunkSize = 0x8000;
-                for (let i = 0; i < bytes.length; i += chunkSize) {
-                    binaryString += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+                if (typeof Buffer !== 'undefined' && Buffer.from) {
+                    const buf = Buffer.from(fileBinaryData);
+                    binaryString = buf.toString('binary');
+                } else {
+                    const bytes = new Uint8Array(fileBinaryData);
+                    const chunkSize = 0x8000;
+                    for (let i = 0; i < bytes.length; i += chunkSize) {
+                        binaryString += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+                    }
                 }
 
                 const fileArray = [{
