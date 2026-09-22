@@ -1,7 +1,7 @@
 # ⌨️ ESP32-S3 BLE Hardware Keyboard Injector
 
 Ein vielseitiger USB-Tastatur-Simulator auf Basis des **ESP32-S3** (z. B. Waveshare ESP32-GEEK). 
-Das Gerät verbindet sich per **Bluetooth Low Energy (BLE)** mit einem Smartphone/PC und gibt empfangenen Text als native USB-Hardware-Tastatur an den Ziel-Computer weiter.
+Das Gerät verbindet sich per **Web Bluetooth** direkt über den Webbrowser (ohne App-Installation) mit einem Smartphone oder PC und gibt empfangenen Text als native USB-Hardware-Tastatur an den Ziel-Computer weiter.
 
 Unterstützt einen extrem schnellen **Windows-Modus via Alt-Codes** sowie einen **BIOS-Boot-Protocol-Modus** für direkte Eingaben in Server-BIOS-, UEFI- und Pre-Boot-Umgebungen.
 
@@ -9,13 +9,13 @@ Unterstützt einen extrem schnellen **Windows-Modus via Alt-Codes** sowie einen 
 
 ## ✨ Features
 
-* **⚡ Nativer USB-HID-Stack:** Verwendet `Adafruit_TinyUSB` für maximale Kompatibilität mit alten Systemen und Server-BIOS[cite: 1].
+* **⚡ Nativer USB-HID-Stack:** Verwendet `Adafruit_TinyUSB` für maximale Kompatibilität mit alten Systemen und Server-BIOS.
+* **🌐 Browser-Steuerung via Web Bluetooth:** Keine App-Installation nötig. Einfach die mitgelieferte `index.html` aufrufen (z. B. via GitHub Pages auf dem Smartphone) und sofort verbinden.
 * **🔄 Zwei Betriebsmodi:**
   * **BIOS-Modus:** Erzwingt das USB-Boot-Protokoll, verlangsamt die Tastenanschläge künstlich und mappt Eingaben präzise auf das englische US-Layout.
   * **Windows-Modus:** Sendet Zeichen blitzschnell via Numpad-Alt-Codes (ca. 35 ms pro Zeichen). Garantiert korrekte Zeichenübertragung unabhängig vom Tastaturlayout des Ziel-PCs.
 * **📦 Asynchroner Text-Puffer:** Verhindert Watchdog-Resets und Datenverlust bei langen Texteingaben.
 * **🔘 Spezialbefehle:** Unterstützt vordefinierte Steuerbefehle für Macro-Funktionen (z. B. `Strg + Alt + Entf`).
-* **📱 BLE-Steuerung:** Steuerung über jede beliebige BLE-Serial- oder Terminal-App (z. B. Serial Bluetooth Terminal).
 
 ---
 
@@ -23,6 +23,19 @@ Unterstützt einen extrem schnellen **Windows-Modus via Alt-Codes** sowie einen 
 
 * **ESP32-S3 Board mit nativem USB** (Empfohlen: *Waveshare ESP32-GEEK* oder *ESP32-S3 DevKitC*).
 * USB-Kabel / direkter USB-A-Port zum Ziel-System.
+
+---
+
+## 🌐 Web-Interface (Web Bluetooth)
+
+Für die Steuerung über den Browser ist eine einfache `index.html` enthalten.
+
+> **Hinweis:** Die Web Bluetooth API erfordert einen unterstützen Browser (Chrome, Edge, Opera) und muss entweder über `https://` (z. B. via GitHub Pages) oder lokal über `file://` aufgerufen werden.
+
+### Funktionsweise der Weboberfläche:
+1. Auf **"Verbinden"** klicken und das Gerät **ESP32-S3 Keyboard** auswählen.
+2. Den Modus wählen (**BIOS** oder **Windows**).
+3. Text eingeben und absenden oder Buttons für Schnellbefehle (`Enter`, `Strg+Alt+Entf`) nutzen.
 
 ---
 
@@ -41,9 +54,9 @@ Wähle dein ESP32-S3 Board aus und setze folgende Werte unter **Werkzeuge (Tools
 
 ---
 
-## 🚀 Steuerbefehle (über BLE)
+## 🚀 Steuerbefehle (Protokoll)
 
-Sende die folgenden Befehle als Text über die Bluetooth-Verbindung, um den Modus zu wechseln oder Sonderaktionen auszuführen:
+Die Webapp sendet folgende Strings über die BLE-Charakteristik an den ESP32-S3:
 
 | Befehl | Funktion |
 | :--- | :--- |
@@ -53,3 +66,8 @@ Sende die folgenden Befehle als Text über die Bluetooth-Verbindung, um den Modu
 | `CMD:ENTER` | Sendet die **`Enter`**-Taste. |
 | *Jeder andere Text* | Wird direkt Zeichen für Zeichen über die USB-Schnittstelle getippt. |
 
+---
+
+## 📝 Lizenz
+
+Dieses Projekt steht unter der [MIT License](LICENSE).
