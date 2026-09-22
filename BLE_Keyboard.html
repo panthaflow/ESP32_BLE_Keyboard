@@ -32,6 +32,11 @@
         .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: #4CAF50; }
         input:checked + .slider:before { transform: translateX(20px); }
+
+        /* Footer styling */
+        footer { margin-top: 40px; padding-top: 15px; border-top: 1px solid #eee; text-align: center; font-size: 13px; color: #666; }
+        footer a { color: #0066cc; text-decoration: none; }
+        footer a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
@@ -83,6 +88,14 @@
 
     <div id="status" data-i18n="statusDisconnected">Status: Nicht verbunden</div>
 
+    <footer>
+        <span data-i18n="footerRepo">Projekt auf GitHub:</span> 
+        <a href="https://github.com/panthaflow/ESP32_BLE_Keyboard" target="_blank">ESP32_BLE_Keyboard</a>
+        <br>
+        <span data-i18n="footerIssues">Probleme oder Feedback?</span> 
+        <a href="https://github.com/panthaflow/ESP32_BLE_Keyboard/issues" target="_blank" data-i18n="footerReportLink">Hier melden</a>
+    </footer>
+
     <script>
         // Sprachressourcen (Internationalisierung)
         const i18n = {
@@ -102,7 +115,10 @@
                 statusErrorConnect: "Status: Fehler beim Verbinden.",
                 statusWaiting: "Status: Warte ",
                 statusSeconds: " Sekunden...",
-                alertSendError: "Fehler beim Senden!"
+                alertSendError: "Fehler beim Senden!",
+                footerRepo: "Projekt auf GitHub:",
+                footerIssues: "Probleme oder Feedback?",
+                footerReportLink: "Hier melden"
             },
             en: {
                 btnConnect: "1. Connect Bluetooth",
@@ -120,7 +136,10 @@
                 statusErrorConnect: "Status: Connection failed.",
                 statusWaiting: "Status: Waiting ",
                 statusSeconds: " seconds...",
-                alertSendError: "Error sending data!"
+                alertSendError: "Error sending data!",
+                footerRepo: "Project on GitHub:",
+                footerIssues: "Issues or feedback?",
+                footerReportLink: "Report here"
             }
         };
 
