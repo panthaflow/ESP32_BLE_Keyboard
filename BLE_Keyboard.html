@@ -3,19 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ESP32 Bluetooth Tastatur</title>
+    <title>ESP32 Bluetooth Keyboard</title>
     <style>
         body { font-family: Arial, sans-serif; padding: 20px; max-width: 500px; margin: auto; }
-        textarea { width: 100%; height: 100px; margin-bottom: 10px; font-size: 16px; padding: 5px;}
-        button { padding: 10px 20px; font-size: 16px; cursor: pointer; margin-right: 10px; margin-bottom: 10px;}
+        textarea { width: 100%; height: 100px; margin-bottom: 10px; font-size: 16px; padding: 5px; box-sizing: border-box; }
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; margin-right: 10px; margin-bottom: 10px; }
         
+        .header-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .lang-select { padding: 5px 8px; font-size: 14px; border-radius: 4px; border: 1px solid #ccc; cursor: pointer; }
+
         #cadBtn { background-color: #ff4d4d; color: white; border: none; border-radius: 4px; }
         #cadBtn:disabled { background-color: #ffb3b3; cursor: not-allowed; }
         
         #enterBtn { background-color: #4CAF50; color: white; border: none; border-radius: 4px; }
         #enterBtn:disabled { background-color: #a5d6a7; cursor: not-allowed; }
         
-        #status { margin-top: 20px; color: gray; font-weight: bold;}
+        #status { margin-top: 20px; color: gray; font-weight: bold; }
         
         details { margin-bottom: 20px; padding: 10px; background-color: #f9f9f9; border-radius: 4px; border: 1px solid #ddd; }
         summary { cursor: pointer; font-weight: bold; margin-bottom: 5px; }
@@ -33,20 +36,26 @@
 </head>
 <body>
 
-    <h2>ESP32 Remote Keyboard</h2>
+    <div class="header-container">
+        <h2>ESP32 Remote Keyboard</h2>
+        <select id="langSelect" class="lang-select">
+            <option value="de">🇩🇪 DE</option>
+            <option value="en">🇬🇧 EN</option>
+        </select>
+    </div>
     
-    <button id="connectBtn">1. Bluetooth Verbinden</button>
+    <button id="connectBtn" data-i18n="btnConnect">1. Bluetooth Verbinden</button>
     <br><br>
     
     <details>
-        <summary>⚙️ Erweiterte Einstellungen</summary>
+        <summary data-i18n="settingsTitle">⚙️ Erweiterte Einstellungen</summary>
         <div class="settings-content">
             <div class="setting-row">
-                <label for="delayInput">Verzögerung (in Sekunden): </label>
+                <label for="delayInput" data-i18n="labelDelay">Verzögerung (in Sekunden): </label>
                 <input type="number" id="delayInput" value="0" min="0" max="60" style="width: 60px; padding: 5px; font-size: 16px;">
             </div>
             <div class="setting-row">
-                <span>Text nach Senden löschen: </span>
+                <span data-i18n="labelClear">Text nach Senden löschen: </span>
                 <label class="switch">
                     <input type="checkbox" id="clearTextToggle" checked>
                     <span class="slider"></span>
@@ -54,7 +63,7 @@
             </div>
             <hr style="border: 0; border-top: 1px solid #ddd; margin: 15px 0;">
             <div class="setting-row">
-                <span><strong>Modus: BIOS</strong> (Standard US-Layout): </span>
+                <span data-i18n="labelBios"><strong>Modus: BIOS</strong> (Standard US-Layout): </span>
                 <label class="switch">
                     <!-- Aus = Windows Alt-Codes | An = BIOS US-Layout -->
                     <input type="checkbox" id="biosToggle">
@@ -64,17 +73,60 @@
         </div>
     </details>
 
-    <textarea id="textInput" placeholder="Hier Text eingeben..." spellcheck="false" autocorrect="off" autocapitalize="off"></textarea>
+    <textarea id="textInput" data-i18n-placeholder="placeholderText" placeholder="Hier Text eingeben..." spellcheck="false" autocorrect="off" autocapitalize="off"></textarea>
     
     <div>
-        <button id="sendBtn" disabled>2. Text Senden</button>
+        <button id="sendBtn" data-i18n="btnSend" disabled>2. Text Senden</button>
         <button id="cadBtn" disabled>Strg + Alt + Entf</button>
         <button id="enterBtn" disabled>↩️ Enter</button>
     </div>
 
-    <div id="status">Status: Nicht verbunden</div>
+    <div id="status" data-i18n="statusDisconnected">Status: Nicht verbunden</div>
 
     <script>
+        // Sprachressourcen (Internationalisierung)
+        const i18n = {
+            de: {
+                btnConnect: "1. Bluetooth Verbinden",
+                settingsTitle: "⚙️ Erweiterte Einstellungen",
+                labelDelay: "Verzögerung (in Sekunden): ",
+                labelClear: "Text nach Senden löschen: ",
+                labelBios: "Modus: BIOS (Standard US-Layout): ",
+                placeholderText: "Hier Text eingeben...",
+                btnSend: "2. Text Senden",
+                statusDisconnected: "Status: Nicht verbunden",
+                statusSearching: "Status: Suche nach Geräten...",
+                statusConnecting: "Status: Verbinde mit ",
+                statusConnected: "Status: Verbunden! Du kannst jetzt senden.",
+                statusLost: "Status: Verbindung verloren.",
+                statusErrorConnect: "Status: Fehler beim Verbinden.",
+                statusWaiting: "Status: Warte ",
+                statusSeconds: " Sekunden...",
+                alertSendError: "Fehler beim Senden!"
+            },
+            en: {
+                btnConnect: "1. Connect Bluetooth",
+                settingsTitle: "⚙️ Advanced Settings",
+                labelDelay: "Delay (in seconds): ",
+                labelClear: "Clear text after sending: ",
+                labelBios: "Mode: BIOS (Standard US Layout): ",
+                placeholderText: "Type text here...",
+                btnSend: "2. Send Text",
+                statusDisconnected: "Status: Disconnected",
+                statusSearching: "Status: Searching for devices...",
+                statusConnecting: "Status: Connecting to ",
+                statusConnected: "Status: Connected! Ready to send.",
+                statusLost: "Status: Connection lost.",
+                statusErrorConnect: "Status: Connection failed.",
+                statusWaiting: "Status: Waiting ",
+                statusSeconds: " seconds...",
+                alertSendError: "Error sending data!"
+            }
+        };
+
+        let currentLang = localStorage.getItem('appLang') || 'de';
+
+        const langSelect = document.getElementById('langSelect');
         const connectBtn = document.getElementById('connectBtn');
         const sendBtn = document.getElementById('sendBtn');
         const cadBtn = document.getElementById('cadBtn');
@@ -90,22 +142,52 @@
         const characteristicUuid = "beb5483e-36e1-4688-b7f5-ea07361b26a8";
 
         let bleCharacteristic = null;
+        let isConnected = false;
+
+        // Funktion zum Umschalten aller Oberflächentexte
+        function updateLanguage(lang) {
+            currentLang = lang;
+            localStorage.setItem('appLang', lang);
+            langSelect.value = lang;
+
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (i18n[lang][key]) el.innerHTML = i18n[lang][key];
+            });
+
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-i18n-placeholder');
+                if (i18n[lang][key]) el.placeholder = i18n[lang][key];
+            });
+
+            // Statusmeldung dynamisch aktualisieren, falls nicht verbunden
+            if (!isConnected && bleCharacteristic === null) {
+                statusDiv.innerText = i18n[currentLang].statusDisconnected;
+            }
+        }
+
+        langSelect.addEventListener('change', (e) => {
+            updateLanguage(e.target.value);
+        });
 
         connectBtn.addEventListener('click', async () => {
             try {
-                statusDiv.innerText = "Status: Suche nach Geräten...";
+                statusDiv.innerText = i18n[currentLang].statusSearching;
+                statusDiv.style.color = "gray";
+
                 const device = await navigator.bluetooth.requestDevice({
                     filters: [{ name: 'ESP32-S3 Keyboard' }],
                     optionalServices: [serviceUuid]
                 });
 
-                statusDiv.innerText = "Status: Verbinde mit " + device.name + "...";
+                statusDiv.innerText = i18n[currentLang].statusConnecting + device.name + "...";
                 const server = await device.gatt.connect();
                 
                 const service = await server.getPrimaryService(serviceUuid);
                 bleCharacteristic = await service.getCharacteristic(characteristicUuid);
 
-                statusDiv.innerText = "Status: Verbunden! Du kannst jetzt senden.";
+                isConnected = true;
+                statusDiv.innerText = i18n[currentLang].statusConnected;
                 statusDiv.style.color = "green";
                 
                 sendBtn.disabled = false;
@@ -113,7 +195,9 @@
                 enterBtn.disabled = false;
 
                 device.addEventListener('gattserverdisconnected', () => {
-                    statusDiv.innerText = "Status: Verbindung verloren.";
+                    isConnected = false;
+                    bleCharacteristic = null;
+                    statusDiv.innerText = i18n[currentLang].statusLost;
                     statusDiv.style.color = "red";
                     
                     sendBtn.disabled = true;
@@ -123,12 +207,11 @@
 
             } catch (error) {
                 console.error(error);
-                statusDiv.innerText = "Status: Fehler beim Verbinden.";
+                statusDiv.innerText = i18n[currentLang].statusErrorConnect;
                 statusDiv.style.color = "red";
             }
         });
 
-        // Hilfsfunktion um schnell einen Befehl zu senden (ohne die Verzögerungslogik)
         async function sendRawCommand(cmdStr) {
             if (!bleCharacteristic) return;
             const encoder = new TextEncoder();
@@ -138,49 +221,43 @@
         async function sendDataWithDelay(dataString) {
             if (!bleCharacteristic) return;
             
-            // 1. Verzögerung prüfen und abwarten
             const delaySeconds = parseFloat(delayInput.value) || 0;
             const delayMs = delaySeconds * 1000;
 
             if (delayMs > 0) {
-                statusDiv.innerText = `Status: Warte ${delaySeconds} Sekunden...`;
+                statusDiv.innerText = i18n[currentLang].statusWaiting + delaySeconds + i18n[currentLang].statusSeconds;
                 statusDiv.style.color = "orange";
                 await new Promise(resolve => setTimeout(resolve, delayMs));
-                statusDiv.innerText = "Status: Verbunden! Du kannst jetzt senden.";
+                statusDiv.innerText = i18n[currentLang].statusConnected;
                 statusDiv.style.color = "green";
             }
 
             try {
-                // 2. Dem ESP32 den aktuellen Modus mitteilen (WIN oder BIOS)
                 const modeCmd = biosToggle.checked ? "CMD:BIOS" : "CMD:WIN";
                 await sendRawCommand(modeCmd);
                 
-                // Kurze Pause, damit der ESP32 den Modus umschalten kann, bevor die Daten kommen
                 await new Promise(resolve => setTimeout(resolve, 100));
 
-                // 3. Wenn es ein Systembefehl (CMD:...) ist, direkt senden
                 if (dataString.startsWith("CMD:")) {
                     await sendRawCommand(dataString);
                     return;
                 }
 
-                // 4. Wenn es Text ist: "Schlaue" Anführungszeichen durch normale ersetzen
                 let cleanText = dataString;
                 cleanText = cleanText.replace(/[\u2018\u2019‚]/g, "'"); 
                 cleanText = cleanText.replace(/[\u201C\u201D„]/g, '"'); 
 
-                // Umwandlung in Single-Bytes (wichtig für den Windows Alt-Code Modus)
                 const data = new Uint8Array(cleanText.length);
                 for (let i = 0; i < cleanText.length; i++) {
                     let charCode = cleanText.charCodeAt(i);
-                    if (charCode > 255) charCode = 63; // Unbekanntes Zeichen wird zu "?"
+                    if (charCode > 255) charCode = 63; 
                     data[i] = charCode;
                 }
 
                 await bleCharacteristic.writeValue(data);
             } catch (error) {
                 console.error(error);
-                alert("Fehler beim Senden!");
+                alert(i18n[currentLang].alertSendError);
             }
         }
 
@@ -202,6 +279,9 @@
         enterBtn.addEventListener('click', async () => {
             await sendDataWithDelay("CMD:ENTER");
         });
+
+        // Initiales Laden der Sprache
+        updateLanguage(currentLang);
     </script>
 </body>
 </html>
