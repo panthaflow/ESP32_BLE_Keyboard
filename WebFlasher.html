@@ -28,7 +28,7 @@
 
     <div class="card">
         <h2>⚡ ESP32-S3 Web Flasher</h2>
-        <p>Flashe die neueste Firmware direkt aus dem Browser auf deinen ESP32-S3, ohne Dateien herunterzuladen.</p>
+        <p>Flashe die neueste Firmware direkt aus dem Browser auf deinen ESP32-S3, ohne Dateien manuell herunterzuladen.</p>
         
         <div class="status-box">
             <strong>Gefundenes Release:</strong> <span id="releaseInfo">Suche nach neuem Release...</span><br>
@@ -58,6 +58,8 @@
         import { ESPLoader, Transport } from "https://unpkg.com/esptool-js@0.4.3/bundle.js";
 
         const REPO = "panthaflow/ESP32_BLE_Keyboard";
+        // Fallback-Dateiname, falls eine `firmware.bin` direkt im Repo liegt
+        const LOCAL_FIRMWARE_PATH = "ESP32_Keyboard_v1.0.1.ino.merged.bin";
         
         const connectBtn = document.getElementById('connectBtn');
         const flashBtn = document.getElementById('flashBtn');
@@ -81,48 +83,51 @@
 
         async function fetchLatestRelease() {
             try {
-                log("🔍 Suche auf GitHub nach dem neuesten Release...");
+                log("🔍 Suche nach Firmware-Datei...");
+
+                // 1. Primärversuch: Direkt von GitHub Pages laden (100% CORS-frei!)
+                try {
+                    const localRes = await fetch(LOCAL_FIRMWARE_PATH);
+                    if (localRes.ok) {
+                        fileBinaryData = await localRes.arrayBuffer();
+                        releaseInfo.innerText = "v1.0.1 (Direktes Host-Release)";
+                        fileInfo.innerText = `${LOCAL_FIRMWARE_PATH} (${(fileBinaryData.byteLength / 1024 / 1024).toFixed(2)} MB)`;
+                        log("✅ Firmware direkt vom Server geladen! Keine CORS-Probleme.");
+                        connectBtn.disabled = false;
+                        return;
+                    }
+                } catch(e) {
+                    log("ℹ️ Lokale Firmware nicht gefunden, frage GitHub API ab...");
+                }
+
+                // 2. Sekundärversuch: Über GitHub Release API
                 const response = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`);
-                
-                if (!response.ok) throw new Error("Release API konnte nicht abgefragt werden.");
+                if (!response.ok) throw new Error("Release API nicht erreichbar.");
                 
                 const data = await response.json();
-                const releaseName = data.name || data.tag_name;
-                releaseInfo.innerText = releaseName;
+                releaseInfo.innerText = data.name || data.tag_name;
 
                 const mergedAsset = data.assets.find(a => a.name.endsWith("merged.bin"));
+                if (!mergedAsset) throw new Error("Keine 'merged.bin' im Release vorhanden.");
 
-                if (!mergedAsset) {
-                    fileInfo.innerText = "❌ Keine 'merged.bin' im Release gefunden!";
-                    log("❌ Fehler: Kein Asset mit Endung 'merged.bin' im Release gefunden.");
-                    return;
-                }
+                fileInfo.innerText = mergedAsset.name;
+                log(`📥 Lade Release-Datei: ${mergedAsset.name}...`);
 
-                fileInfo.innerText = `${mergedAsset.name} (${(mergedAsset.size / 1024 / 1024).toFixed(2)} MB)`;
-                log(`📥 Lade Firmware: ${mergedAsset.name}...`);
+                // CORS-Proxy Versuch über codetabs
+                const proxyUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(mergedAsset.browser_download_url)}`;
+                const binResponse = await fetch(proxyUrl);
+                
+                if (!binResponse.ok) throw new Error("Download über Proxy fehlgeschlagen.");
 
-                // CORS-sicherer Download über GitHub API Endpoint
-                const binResponse = await fetch(mergedAsset.url, {
-                    headers: { 'Accept': 'application/octet-stream' }
-                });
-
-                if (!binResponse.ok) {
-                    // Fallback falls API Octet-Stream fehlschlägt
-                    const rawResponse = await fetch(mergedAsset.browser_download_url);
-                    if (!rawResponse.ok) throw new Error("Datei-Download blockiert (CORS).");
-                    const blob = await rawResponse.blob();
-                    fileBinaryData = await blob.arrayBuffer();
-                } else {
-                    fileBinaryData = await binResponse.arrayBuffer();
-                }
-
-                log("✅ Firmware erfolgreich geladen! Bereit zum Verbinden.");
+                fileBinaryData = await binResponse.arrayBuffer();
+                log("✅ Firmware erfolgreich über Proxy geladen!");
                 connectBtn.disabled = false;
 
             } catch (err) {
                 console.error(err);
-                log("❌ Fehler beim Laden der Firmware-Datei: " + err.message);
-                fileInfo.innerText += " (Download-Fehler)";
+                log("❌ Fehler: " + err.message);
+                log("💡 TIPP: Lege die Datei '" + LOCAL_FIRMWARE_PATH + "' direkt in das Hauptverzeichnis deines Repositories, um CORS-Sperren komplett zu umgehen.");
+                fileInfo.innerText = "Download-Fehler (CORS)";
             }
         }
 
@@ -169,11 +174,11 @@
                 
                 log("🚀 Starte Flash-Vorgang (Offset 0x0000)...");
 
-                // Konvertierung in Binärstring für esptool-js
                 const bytes = new Uint8Array(fileBinaryData);
                 let binaryString = "";
-                for (let i = 0; i < bytes.byteLength; i++) {
-                    binaryString += String.fromCharCode(bytes[i]);
+                const chunkSize = 0x8000;
+                for (let i = 0; i < bytes.length; i += chunkSize) {
+                    binaryString += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
                 }
 
                 const fileArray = [{
