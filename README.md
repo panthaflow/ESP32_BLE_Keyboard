@@ -1,6 +1,6 @@
 # ⌨️ ESP32-S3 BLE Hardware Keyboard Injector
 
-Ein vielseitiger USB-Tastatur-Simulator auf Basis des **ESP32-S3** (z. B. Waveshare ESP32-GEEK)[cite: 1]. 
+Ein vielseitiger USB-Tastatur-Simulator auf Basis des **ESP32-S3** (z. B. Waveshare ESP32-GEEK). 
 Das Gerät verbindet sich per **Bluetooth Low Energy (BLE)** mit einem Smartphone/PC und gibt empfangenen Text als native USB-Hardware-Tastatur an den Ziel-Computer weiter.
 
 Unterstützt einen extrem schnellen **Windows-Modus via Alt-Codes** sowie einen **BIOS-Boot-Protocol-Modus** für direkte Eingaben in Server-BIOS-, UEFI- und Pre-Boot-Umgebungen.
