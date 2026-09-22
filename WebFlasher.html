@@ -235,12 +235,20 @@
             flashBtn.disabled = true;
             fileBinaryData = null;
             
-            const filePath = `${FIRMWARE_DIR}/${fileName}`;
+            // Finde das korrekte Datei-Objekt aus der zuvor geladenen GitHub-API Antwort
+            const fileObj = firmwareFiles.find(f => f.name === fileName);
+            if (!fileObj || !fileObj.download_url) {
+                log(i18n[currentLang].logLoadFailed + "Keine gültige Download-URL in der API-Antwort gefunden.");
+                fileInfo.innerText = "URL Error";
+                return;
+            }
+
+            const downloadUrl = fileObj.download_url; // Nutze den direkten Raw-Link von GitHub
             fileInfo.innerText = `${fileName} - Loading...`;
-            log(i18n[currentLang].logLoadingFile + filePath + "...");
+            log(i18n[currentLang].logLoadingFile + fileName + "...");
 
             try {
-                const res = await fetch(filePath);
+                const res = await fetch(downloadUrl);
                 if (!res.ok) throw new Error(`HTTP Status ${res.status}`);
 
                 fileBinaryData = await res.arrayBuffer();
