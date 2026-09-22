@@ -53,10 +53,3 @@ Sende die folgenden Befehle als Text über die Bluetooth-Verbindung, um den Modu
 | `CMD:ENTER` | Sendet die **`Enter`**-Taste. |
 | *Jeder andere Text* | Wird direkt Zeichen für Zeichen über die USB-Schnittstelle getippt. |
 
----
-
-## 🔧 Installation
-
-1. Clone dieses Repository:
-   ```bash
-   git clone [https://github.com/DEIN_USERNAME/ESP32-S3-BLE-Keyboard.git](https://github.com/DEIN_USERNAME/ESP32-S3-BLE-Keyboard.git)
