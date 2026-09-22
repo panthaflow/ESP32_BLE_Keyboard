@@ -4,15 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ESP32-S3 Web Flasher & Terminal</title>
-    
-    <!-- Vollständiges Node.js Buffer Polyfill für Browser (MUSS vor esptool-js geladen werden) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/buffer/6.0.3/buffer.min.js"></script>
+
+    <!-- Node.js Buffer Polyfill - ZWINGEND vor esptool-js laden -->
+    <script src="https://bundle.run/buffer@6.0.3"></script>
     <script>
-        // Globales Buffer-Objekt sicherstellen
+        // Globales Buffer-Objekt für den Browser bereitstellen
         if (typeof window.buffer !== 'undefined') {
             window.Buffer = window.buffer.Buffer;
-        } else if (typeof buffer !== 'undefined') {
-            window.Buffer = buffer.Buffer;
         }
     </script>
 
@@ -324,17 +322,12 @@
                 
                 log(i18n[currentLang].logStartingFlash);
 
-                // Konvertierung mit Unterstützung von Buffer.from
+                // Sichere Binary-Konvertierung
                 let binaryString = "";
-                if (typeof Buffer !== 'undefined' && Buffer.from) {
-                    const buf = Buffer.from(fileBinaryData);
-                    binaryString = buf.toString('binary');
-                } else {
-                    const bytes = new Uint8Array(fileBinaryData);
-                    const chunkSize = 0x8000;
-                    for (let i = 0; i < bytes.length; i += chunkSize) {
-                        binaryString += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
-                    }
+                const bytes = new Uint8Array(fileBinaryData);
+                const chunkSize = 0x8000;
+                for (let i = 0; i < bytes.length; i += chunkSize) {
+                    binaryString += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
                 }
 
                 const fileArray = [{
