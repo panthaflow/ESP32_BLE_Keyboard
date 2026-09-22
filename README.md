@@ -49,7 +49,7 @@ Install the following libraries via the Arduino IDE **Library Manager** (`Ctrl` 
 Select the following options under **Tools**:
 * **Board:** `ESP32S3 Dev Module` (or your specific board like *Waveshare ESP32-S3-GEEK*)
 * **USB Mode:** `USB-OTG (TinyUSB)` ⚠️ *(Mandatory for keyboard emulation)*
-* **USB CDC On Boot:** `Disabled` *(Prevents dual COM port conflicts in BIOS)*
+* **USB CDC On Boot:** `Enabled` *(Prevents Memory Crashes)*
 * **Flash Size:** `8MB` or `16MB` (depending on your board)
 * **Partition Scheme:** `Huge APP (3MB No OTA/1MB SPIFFS)`
 
@@ -119,7 +119,7 @@ Installiere die folgenden Bibliotheken über den **Bibliotheksverwalter** der Ar
 Wähle im Menü unter **Werkzeuge (Tools)** folgende Optionen aus:
 * **Board:** `ESP32S3 Dev Module` *(oder z. B. Waveshare ESP32-S3-GEEK)*
 * **USB Mode:** `USB-OTG (TinyUSB)` ⚠️ *(Absolut notwendig für die Tastatur-Emulation)*
-* **USB CDC On Boot:** `Disabled` *(Verhindert einen doppelten COM-Port-Eintrag)*
+* **USB CDC On Boot:** `Enabled` *(Verhindert Speicher Abstürze)*
 * **Flash Size:** `8MB` oder `16MB`
 * **Partition Scheme:** `Huge APP (3MB No OTA/1MB SPIFFS)`
 
