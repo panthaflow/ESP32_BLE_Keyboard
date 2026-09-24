@@ -22,6 +22,8 @@
         .lang-select { padding: 5px 8px; font-size: 14px; border-radius: 4px; border: 1px solid #ccc; cursor: pointer; }
 
         .status-box { background: #eef5fc; border-left: 4px solid #0066cc; padding: 12px; margin: 15px 0; border-radius: 0 4px 4px 0; font-size: 14px; }
+        .hint-box { background: #fff3cd; border-left: 4px solid #ffc107; padding: 10px 12px; margin: 10px 0; border-radius: 0 4px 4px 0; font-size: 13px; color: #664d03; }
+        
         .version-select { width: 100%; padding: 8px; margin-top: 5px; margin-bottom: 10px; font-size: 14px; border-radius: 4px; border: 1px solid #ccc; }
         
         .progress-bar-container { width: 100%; background-color: #ddd; border-radius: 4px; overflow: hidden; height: 16px; margin-top: 10px; display: none; }
@@ -63,6 +65,10 @@
             <button id="flashBtn" data-i18n="btnFlash" disabled>2. Flashen (0x0000)</button>
         </div>
 
+        <div class="hint-box" data-i18n="bootHint">
+            💡 <b>Hinweis:</b> Bei Verbindungsproblemen halte die <b>BOOT-Taste</b> am ESP32 gedrückt, während du ihn per USB ansteckst.
+        </div>
+
         <div class="progress-bar-container" id="progressContainer">
             <div class="progress-bar" id="progressBar"></div>
         </div>
@@ -92,6 +98,7 @@
                 infoLoadingFirmware: "Lade Firmware-Informationen...",
                 btnConnect: "1. ESP32 Verbinden",
                 btnFlash: "2. Flashen (0x0000)",
+                bootHint: "💡 <b>Hinweis:</b> Bei Verbindungsproblemen halte die <b>BOOT-Taste</b> am ESP32 gedrückt, während du ihn per USB ansteckst.",
                 terminalTitle: "💻 Serieller Monitor (Terminal)",
                 footerRepo: "ESP32_BLE_Keyboard auf GitHub",
                 latestBadge: "(Neueste / Latest)",
@@ -118,6 +125,7 @@
                 infoLoadingFirmware: "Loading firmware details...",
                 btnConnect: "1. Connect ESP32",
                 btnFlash: "2. Flash (0x0000)",
+                bootHint: "💡 <b>Note:</b> If you experience connection issues, hold down the <b>BOOT button</b> on the ESP32 while plugging it in via USB.",
                 terminalTitle: "💻 Serial Monitor (Terminal)",
                 footerRepo: "ESP32_BLE_Keyboard on GitHub",
                 latestBadge: "(Latest)",
