@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="de" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,33 +11,91 @@
         if (typeof window.buffer !== 'undefined') {
             window.Buffer = window.buffer.Buffer;
         }
+        
+        // Theme direkt laden, um "Aufblitzen" eines falschen Themes zu verhindern
+        const savedTheme = localStorage.getItem('appTheme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
     </script>
 
     <style>
-        body { font-family: Arial, sans-serif; max-width: 650px; margin: 20px auto; padding: 20px; background: #f4f6f8; color: #333; }
-        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        :root {
+            /* Light Theme Variablen */
+            --bg-color: #f4f6f8;
+            --text-color: #333333;
+            --card-bg: #ffffff;
+            --card-shadow: rgba(0,0,0,0.1);
+            --accent-color: #0066cc;
+            
+            --status-bg: #eef5fc;
+            --status-border: #0066cc;
+            --hint-bg: #fff3cd;
+            --hint-border: #ffc107;
+            --hint-text: #664d03;
+            
+            --input-bg: #ffffff;
+            --input-border: #cccccc;
+            --input-text: #333333;
+            
+            --console-bg: #1e1e1e;
+            --console-text: #00ff66;
+            
+            --footer-text: #666666;
+        }
+
+        [data-theme="dark"] {
+            /* Dark Theme Variablen */
+            color-scheme: dark;
+            --bg-color: #121212;
+            --text-color: #e0e0e0;
+            --card-bg: #1e1e1e;
+            --card-shadow: rgba(0,0,0,0.5);
+            --accent-color: #66b3ff;
+            
+            --status-bg: #2a3b4c;
+            --status-border: #66b3ff;
+            --hint-bg: #332a00;
+            --hint-border: #ffc107;
+            --hint-text: #ffd966;
+            
+            --input-bg: #2d2d2d;
+            --input-border: #555555;
+            --input-text: #e0e0e0;
+            
+            --console-bg: #000000;
+            --console-text: #00ff66;
+            
+            --footer-text: #999999;
+        }
+
+        body { font-family: Arial, sans-serif; max-width: 650px; margin: 20px auto; padding: 20px; background: var(--bg-color); color: var(--text-color); transition: background 0.3s, color 0.3s; }
+        .card { background: var(--card-bg); padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px var(--card-shadow); margin-bottom: 20px; transition: background 0.3s, box-shadow 0.3s; }
         
         .header-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        h2 { margin: 0; color: #0066cc; }
-        .lang-select { padding: 5px 8px; font-size: 14px; border-radius: 4px; border: 1px solid #ccc; cursor: pointer; }
+        .header-controls { display: flex; align-items: center; gap: 10px; }
+        h2 { margin: 0; color: var(--accent-color); }
+        
+        .theme-toggle { background: none; border: none; font-size: 20px; cursor: pointer; padding: 5px; border-radius: 50%; transition: background 0.2s; }
+        .theme-toggle:hover { background: rgba(128, 128, 128, 0.2); }
+        
+        .lang-select { padding: 5px 8px; font-size: 14px; border-radius: 4px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--input-text); cursor: pointer; }
 
-        .status-box { background: #eef5fc; border-left: 4px solid #0066cc; padding: 12px; margin: 15px 0; border-radius: 0 4px 4px 0; font-size: 14px; }
-        .hint-box { background: #fff3cd; border-left: 4px solid #ffc107; padding: 10px 12px; margin: 10px 0; border-radius: 0 4px 4px 0; font-size: 13px; color: #664d03; }
+        .status-box { background: var(--status-bg); border-left: 4px solid var(--status-border); padding: 12px; margin: 15px 0; border-radius: 0 4px 4px 0; font-size: 14px; }
+        .hint-box { background: var(--hint-bg); border-left: 4px solid var(--hint-border); padding: 10px 12px; margin: 10px 0; border-radius: 0 4px 4px 0; font-size: 13px; color: var(--hint-text); }
         
-        .version-select { width: 100%; padding: 8px; margin-top: 5px; margin-bottom: 10px; font-size: 14px; border-radius: 4px; border: 1px solid #ccc; }
+        .version-select { width: 100%; padding: 8px; margin-top: 5px; margin-bottom: 10px; font-size: 14px; border-radius: 4px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--input-text); }
         
-        .progress-bar-container { width: 100%; background-color: #ddd; border-radius: 4px; overflow: hidden; height: 16px; margin-top: 10px; display: none; }
+        .progress-bar-container { width: 100%; background-color: #555; border-radius: 4px; overflow: hidden; height: 16px; margin-top: 10px; display: none; }
         .progress-bar { width: 0%; height: 100%; background-color: #4CAF50; transition: width 0.2s; }
         
         button { padding: 12px 20px; font-size: 15px; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; margin-bottom: 10px; }
         #connectBtn { background-color: #0066cc; color: white; }
         #flashBtn { background-color: #4CAF50; color: white; }
-        #flashBtn:disabled, #connectBtn:disabled { background-color: #cccccc; cursor: not-allowed; }
+        #flashBtn:disabled, #connectBtn:disabled { background-color: #777777; color: #ccc; cursor: not-allowed; }
         
-        #console { background: #1e1e1e; color: #00ff66; font-family: 'Courier New', Courier, monospace; font-size: 13px; height: 250px; overflow-y: auto; padding: 10px; border-radius: 4px; white-space: pre-wrap; word-break: break-all; margin-top: 10px; }
+        #console { background: var(--console-bg); color: var(--console-text); font-family: 'Courier New', Courier, monospace; font-size: 13px; height: 250px; overflow-y: auto; padding: 10px; border-radius: 4px; white-space: pre-wrap; word-break: break-all; margin-top: 10px; border: 1px solid var(--input-border); }
         
-        footer { text-align: center; font-size: 12px; color: #666; margin-top: 20px; }
-        footer a { color: #0066cc; text-decoration: none; }
+        footer { text-align: center; font-size: 12px; color: var(--footer-text); margin-top: 20px; }
+        footer a { color: var(--accent-color); text-decoration: none; }
     </style>
 </head>
 <body>
@@ -45,10 +103,13 @@
     <div class="card">
         <div class="header-container">
             <h2>⚡ ESP32-S3 Web Flasher</h2>
-            <select id="langSelect" class="lang-select">
-                <option value="de">🇩🇪 DE</option>
-                <option value="en">🇬🇧 EN</option>
-            </select>
+            <div class="header-controls">
+                <button id="themeToggle" class="theme-toggle" title="Toggle Theme">☀️</button>
+                <select id="langSelect" class="lang-select">
+                    <option value="de">🇩🇪 DE</option>
+                    <option value="en">🇬🇧 EN</option>
+                </select>
+            </div>
         </div>
         <p data-i18n="subtitle">Flashe die Firmware direkt aus dem Browser auf deinen ESP32-S3. Standardmäßig ist die neueste Version gewählt.</p>
         
@@ -86,6 +147,24 @@
     <script type="module">
         import { ESPLoader, Transport } from "https://unpkg.com/esptool-js@0.4.3/bundle.js";
 
+        // Theme Toggle Logic
+        const themeToggle = document.getElementById('themeToggle');
+        function updateThemeIcon() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            themeToggle.textContent = currentTheme === 'dark' ? '☀️' : '🌙';
+        }
+        updateThemeIcon(); // init icon based on loader script in <head>
+
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('appTheme', newTheme);
+            updateThemeIcon();
+        });
+
+
+        // Existing Logic
         const REPO = "panthaflow/ESP32_BLE_Keyboard";
         const FIRMWARE_DIR = "firmware";
         
@@ -243,7 +322,6 @@
             flashBtn.disabled = true;
             fileBinaryData = null;
             
-            // Finde das korrekte Datei-Objekt aus der zuvor geladenen GitHub-API Antwort
             const fileObj = firmwareFiles.find(f => f.name === fileName);
             if (!fileObj || !fileObj.download_url) {
                 log(i18n[currentLang].logLoadFailed + "Keine gültige Download-URL in der API-Antwort gefunden.");
@@ -251,7 +329,7 @@
                 return;
             }
 
-            const downloadUrl = fileObj.download_url; // Nutze den direkten Raw-Link von GitHub
+            const downloadUrl = fileObj.download_url;
             fileInfo.innerText = `${fileName} - Loading...`;
             log(i18n[currentLang].logLoadingFile + fileName + "...");
 
@@ -337,7 +415,6 @@
                 
                 log(i18n[currentLang].logStartingFlash);
 
-                // Konvertierung in einen lückenlosen 8-Bit Binärstring ohne String.fromCharCode-Abriss
                 const bytes = new Uint8Array(fileBinaryData);
                 let binaryDataString = "";
                 for (let i = 0; i < bytes.byteLength; i++) {
