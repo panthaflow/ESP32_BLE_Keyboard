@@ -1,4 +1,4 @@
-# ⌨️ ESP32-S3 BLE Hardware Keyboard Injector
+# ⌨️ ESP32-S3 BLE Hardware (layout independent) Keyboard Injector
 
 ![License](https://img.shields.io/github/license/panthaflow/ESP32_BLE_Keyboard?color=blue) &nbsp;&nbsp;&nbsp; [![Stars](https://img.shields.io/github/stars/panthaflow/ESP32_BLE_Keyboard?style=social)](https://github.com/panthaflow/ESP32_BLE_Keyboard/stargazers) &nbsp;&nbsp;&nbsp; ![Release](https://img.shields.io/github/v/release/panthaflow/ESP32_BLE_Keyboard?color=green) &nbsp;&nbsp;&nbsp; ![ESP32-S3](https://img.shields.io/badge/Hardware-ESP32--S3-orange)
 
@@ -8,10 +8,10 @@
 
 ## 🇬🇧 English
 
-A versatile USB keyboard simulator based on the **ESP32-S3** (e.g., *Waveshare ESP32-GEEK*).  
-The device connects via **Web Bluetooth** directly through any modern web browser (no app installation required) from a smartphone or PC, injecting received text as a native USB hardware keyboard into the target computer.
+A versatile, **layout-independent** USB keyboard simulator based on the **ESP32-S3** (e.g., *Waveshare ESP32-GEEK*).  
+The device connects via **Web Bluetooth** directly through any modern web browser (no app installation required) from a smartphone or PC. It injects received text as a native USB hardware keyboard into the target computer, ensuring **100% accurate character input regardless of the host PC's set keyboard layout** (e.g., DE, US, FR, ES).
 
-Supports a lightning-fast **Windows mode via Alt codes** and a **BIOS Boot Protocol mode** for direct input in server BIOS, UEFI, iDRAC/iLO, and pre-boot environments.
+Supports a lightning-fast **Windows mode via Alt codes** (which relies on Num Lock) and a **BIOS Boot Protocol mode** for direct input in server BIOS, UEFI, iDRAC/iLO, and pre-boot environments.
 
 ---
 
@@ -25,12 +25,14 @@ Supports a lightning-fast **Windows mode via Alt codes** and a **BIOS Boot Proto
 ### ✨ Features
 
 * **⚡ Native USB HID Stack:** Uses `Adafruit_TinyUSB` for maximum compatibility with legacy systems and server BIOS environments.
+* **🔢 Smart Num Lock Auto-Activation:** Intercepts USB HID LED reports from the target PC upon boot. If Num Lock is turned off, the ESP32 automatically enables it. This guarantees that high-speed Windows Alt codes (which require Numpad keystrokes) work reliably regardless of the target PC's set keyboard layout.
+* **🖥️ Display UI & Num Lock Status Warning:** Full Waveshare ESP32-S3 GEEK LCD support. Features dedicated status screens (Bluetooth waiting, typing, connected) and a prominent red **`NUM LOCK OFF`** warning screen if Num Lock is disabled on the host PC.
 * **🌐 Browser Control via Web Bluetooth:** No app installation required. Simply open the web interface locally or via the Live Demo and connect instantly.
 * **🔍 Automatic Firmware Version Check:** The Web UI queries the ESP32 version upon connection (`CMD:GET_VER`) and quietly checks GitHub Releases for available firmware updates.
-* **⚡ Web Flasher Integration:** Easily flash the latest firmware directly from your browser via `flasher.html` using Web Serial.
+* **⚡ Web Flasher Integration:** Easily flash the latest firmware directly from your browser via `WebFlasher.html` using Web Serial.
 * **🔄 Two Operating Modes:**
   * **BIOS Mode:** Forces the USB Boot Protocol, adds artificial delays to keypresses, and maps input precisely to the US QWERTY keyboard layout.
-  * **Windows Mode:** Sends characters at high speed via Numpad Alt codes (~35 ms per character). Guarantees accurate character transmission regardless of the target PC's set keyboard layout.
+  * **Windows Mode:** Sends characters at high speed via Numpad Alt codes (~35 ms per character). Guarantees accurate character transmission regardless of the target PC's set keyboard layout (requires active Num Lock).
 * **📦 Asynchronous Text Buffer:** Prevents watchdog resets and data loss during long text injections.
 * **🔘 Special Commands:** Built-in support for macro operations (e.g., `Ctrl + Alt + Del`).
 
@@ -99,10 +101,10 @@ The web interface sends the following raw strings over the BLE characteristic:
 
 ## 🇩🇪 Deutsch
 
-Ein vielseitiger USB-Tastatur-Simulator auf Basis des **ESP32-S3** (z. B. *Waveshare ESP32-GEEK*).  
-Das Gerät verbindet sich per **Web Bluetooth** direkt über den Webbrowser (ohne App-Installation) mit einem Smartphone oder PC und gibt empfangenen Text als native USB-Hardware-Tastatur an den Ziel-Computer weiter.
+Ein vielseitiger, **tastaturlayout-unabhängiger** USB-Tastatur-Simulator auf Basis des **ESP32-S3** (z. B. *Waveshare ESP32-GEEK*).  
+Das Gerät verbindet sich per **Web Bluetooth** direkt über den Webbrowser (ohne App-Installation) mit einem Smartphone oder PC. Es gibt empfangenen Text als native USB-Hardware-Tastatur an den Ziel-Computer weiter – **völlig unabhängig davon, welches Tastaturlayout am Ziel-PC eingestellt ist** (z. B. DE, US, FR, ES).
 
-Unterstützt einen extrem schnellen **Windows-Modus via Alt-Codes** sowie einen **BIOS-Boot-Protocol-Modus** für direkte Eingaben in Server-BIOS-, UEFI- und Pre-Boot-Umgebungen.
+Unterstützt einen extrem schnellen **Windows-Modus via Alt-Codes** (welcher Num Lock benötigt) sowie einen **BIOS-Boot-Protocol-Modus** für direkte Eingaben in Server-BIOS-, UEFI- und Pre-Boot-Umgebungen.
 
 ---
 
@@ -116,12 +118,14 @@ Unterstützt einen extrem schnellen **Windows-Modus via Alt-Codes** sowie einen 
 ### ✨ Features
 
 * **⚡ Nativer USB-HID-Stack:** Verwendet `Adafruit_TinyUSB` für maximale Kompatibilität mit alten Systemen und Server-BIOS.
+* **🔢 Automatische Num-Lock-Aktivierung:** Fängt beim Anstecken die USB-HID-LED-Signale des Ziel-PCs ab. Ist Num Lock ausgeschaltet, schaltet der ESP32 die Funktion automatisch ein. Dies garantiert, dass die blitzschnellen Windows Alt-Codes (welche den Nummernblock erfordern) absolut zuverlässig und unabhängig vom eingestellten Tastaturlayout des Ziel-PCs funktionieren.
+* **🖥️ Display-UI & Num-Lock-Warnung:** Volle Unterstützung für das LCD des Waveshare ESP32-S3 GEEK. Zeigt den aktuellen System-Status (Warten auf BLE, Tippen, Verbunden) und blendet bei deaktiviertem Num Lock automatisch einen roten **`NUM LOCK OFF`** Warnbildschirm ein.
 * **🌐 Browser-Steuerung via Web Bluetooth:** Keine App-Installation nötig. Einfach die Web-Oberfläche lokal oder via Live-Demo aufrufen und sofort verbinden.
 * **🔍 Automatischer Firmware-Versions-Check:** Die Webapp fragt beim Verbinden die Version des ESP32 ab (`CMD:GET_VER`) und prüft im Hintergrund leise auf verfügbare GitHub-Release-Updates.
-* **⚡ Web-Flasher Integration:** Einfaches Flashen der neuesten Firmware direkt aus dem Browser heraus über die `flasher.html` via Web Serial.
+* **⚡ Web-Flasher Integration:** Einfaches Flashen der neuesten Firmware direkt aus dem Browser heraus über die `WebFlasher.html` via Web Serial.
 * **🔄 Zwei Betriebsmodi:**
   * **BIOS-Modus:** Erzwingt das USB-Boot-Protokoll, verlangsamt die Tastenanschläge künstlich und mappt Eingaben präzise auf das englische US-Layout.
-  * **Windows-Modus:** Sendet Zeichen blitzschnell via Numpad-Alt-Codes (ca. 35 ms pro Zeichen). Garantiert korrekte Zeichenübertragung unabhängig vom Tastaturlayout des Ziel-PCs.
+  * **Windows-Modus:** Sendet Zeichen blitzschnell via Numpad-Alt-Codes (ca. 35 ms pro Zeichen). Garantiert korrekte Zeichenübertragung unabhängig vom Tastaturlayout des Ziel-PCs (erfordert aktives Num Lock).
 * **📦 Asynchroner Text-Puffer:** Verhindert Watchdog-Resets und Datenverlust bei langen Texteingaben.
 * **🔘 Spezialbefehle:** Unterstützt vordefinierte Steuerbefehle für Macro-Funktionen (z. B. `Strg + Alt + Entf`).
 
@@ -160,7 +164,7 @@ Installiere die folgenden Bibliotheken über den **Bibliotheksverwalter** der Ar
 Wähle im Menü unter **Werkzeuge (Tools)** folgende Optionen aus:
 * **Board:** `ESP32S3 Dev Module` *(oder z. B. Waveshare ESP32-S3-GEEK)*
 * **USB Mode:** `USB-OTG (TinyUSB)` ⚠️ *(Absolut notwendig für die Tastatur-Emulation)*
-* **USB CDC On Boot:** `Enabled` *(Verhindert Speicher Abstürze)*
+* **USB CDC On Boot:** `Enabled` *(Verhindert Speicher-Abstürze)*
 * **Flash Size:** `8MB` oder `16MB`
 * **Partition Scheme:** `Huge APP (3MB No OTA/1MB SPIFFS)`
 
