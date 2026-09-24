@@ -2,7 +2,7 @@
 
 ![License](https://img.shields.io/github/license/panthaflow/ESP32_BLE_Keyboard?color=blue) &nbsp;&nbsp;&nbsp; [![Stars](https://img.shields.io/github/stars/panthaflow/ESP32_BLE_Keyboard?style=social)](https://github.com/panthaflow/ESP32_BLE_Keyboard/stargazers) &nbsp;&nbsp;&nbsp; ![Release](https://img.shields.io/github/v/release/panthaflow/ESP32_BLE_Keyboard?color=green) &nbsp;&nbsp;&nbsp; ![ESP32-S3](https://img.shields.io/badge/Hardware-ESP32--S3-orange)
 
-[English](#-english) | [Deutsch](#-deutsch) | [🌐 Live Demo](https://panthaflow.github.io/ESP32_BLE_Keyboard/BLE_Keyboard.html)
+[English](#-english) | [Deutsch](#-deutsch) | [🌐 Live Demo](https://panthaflow.github.io/ESP32_BLE_Keyboard/BLE_Keyboard.html) | [🌐 Web Flasher](https://panthaflow.github.io/ESP32_BLE_Keyboard/WebFlasher.html)
 
 ---
 
@@ -43,9 +43,22 @@ Supports a lightning-fast **Windows mode via Alt codes** and a **BIOS Boot Proto
 
 ---
 
-### ⚡ Flashing & IDE Setup
+### 🌐 Web Flasher & Automatic Updates
 
-To ensure the ESP32-S3 is recognized as a genuine USB hardware keyboard by server BIOS systems, you must configure the Arduino IDE settings correctly.
+The easiest way to install the firmware on a new ESP32-S3 or update an existing one is by using the built-in **Web Flasher**. You do not need to install the Arduino IDE, download any libraries, or configure board settings.
+
+1. **Access the Flasher:** Open the [Web Flasher](https://panthaflow.github.io/ESP32_BLE_Keyboard/WebFlasher.html) in a Web Serial compatible browser (Google Chrome, Microsoft Edge, or Opera).
+2. **Select Firmware:** The flasher automatically fetches the latest compiled `.bin` releases from this repository.
+3. **Flash:** Connect your ESP32-S3 via USB, click **Connect**, select the serial port, and click **Flash**. 
+
+**Automatic Update Detection:**
+When you connect to your ESP32-S3 using the main Web UI (`BLE_Keyboard.html`), the interface automatically sends a version query (`CMD:GET_VER`) to the device. It compares your installed firmware version with the latest release available on GitHub. If a newer version is found, a notification will appear in the Web UI, providing a direct link to the Web Flasher to easily upgrade your device over USB.
+
+---
+
+### ⚡ Flashing & IDE Setup (Advanced)
+
+To compile the firmware yourself and ensure the ESP32-S3 is recognized as a genuine USB hardware keyboard by server BIOS systems, you must configure the Arduino IDE settings correctly.
 
 #### 1. Required Libraries
 Install the following libraries via the Arduino IDE **Library Manager** (`Ctrl` + `Shift` + `I`):
@@ -65,8 +78,6 @@ Select the following options under **Tools**:
 2. **Select Port:** In the Arduino IDE, choose the serial port under **Tools -> Port**.
 3. **Upload Code:** Click the **Upload** button and wait for *"Done uploading"*.
 4. **Reboot:** Re-plug the ESP32-S3 or press the **RESET button** to start the firmware.
-
-*(Alternatively, use the built-in `flasher.html` web flasher to flash without installing any local IDE).*
 
 ---
 
@@ -98,7 +109,7 @@ Unterstützt einen extrem schnellen **Windows-Modus via Alt-Codes** sowie einen 
 ### 💡 Verwendung
 
 * **Empfohlen:** Lade die Datei `BLE_Keyboard.html` direkt aus diesem Repository herunter und öffne sie lokal in deinem Browser (Google Chrome, Microsoft Edge oder Opera).
-* **Für Testzwecke:** Du kannst auch die [Web Bluetooth Control Panel (Live Demo)](https://panthaflow.github.io/ESP32_BLE_Keyboard/index.html) direkt online im Browser nutzen.
+* **Für Testzwecke:** Du kannst auch die [Web Bluetooth Control Panel (Live Demo)](https://panthaflow.github.io/ESP32_BLE_Keyboard/BLE_Keyboard.html) direkt online im Browser nutzen.
 
 ---
 
@@ -123,9 +134,22 @@ Unterstützt einen extrem schnellen **Windows-Modus via Alt-Codes** sowie einen 
 
 ---
 
-### ⚡ Flashing & IDE-Einrichtung
+### 🌐 Web Flasher & Automatische Updates
 
-Damit der ESP32-S3 vom Server-BIOS als echte USB-Hardware-Tastatur erkannt wird, müssen die USB-Optionen in der Arduino IDE zwingend korrekt gesetzt sein.
+Der einfachste Weg, die Firmware auf einen neuen ESP32-S3 zu flashen oder ein Update durchzuführen, ist der integrierte **Web Flasher**. Es ist keine Installation der Arduino IDE, das Herunterladen von Bibliotheken oder das Einstellen von Board-Parametern notwendig.
+
+1. **Flasher öffnen:** Öffne den [Web Flasher](https://panthaflow.github.io/ESP32_BLE_Keyboard/WebFlasher.html) in einem Web-Serial-kompatiblen Browser (Google Chrome, Microsoft Edge oder Opera).
+2. **Firmware wählen:** Der Flasher lädt automatisch die neuesten kompilierten `.bin`-Releases aus diesem Repository.
+3. **Flashen:** Verbinde den ESP32-S3 per USB, klicke auf **Verbinden**, wähle den passenden seriellen Port aus und klicke auf **Flashen**.
+
+**Automatische Update-Suche:**
+Sobald du dich über die Haupt-Weboberfläche (`BLE_Keyboard.html`) mit dem ESP32-S3 verbindest, fragt diese automatisch die aktuell installierte Version ab (`CMD:GET_VER`). Diese wird im Hintergrund mit dem neuesten Release auf GitHub verglichen. Sobald eine neuere Version verfügbar ist, blendet die Web-App eine Benachrichtigung ein und verlinkt direkt auf den Web Flasher, damit du dein Gerät bequem per USB aktualisieren kannst.
+
+---
+
+### ⚡ Flashing & IDE-Einrichtung (Erweitert)
+
+Damit der ESP32-S3 vom Server-BIOS als echte USB-Hardware-Tastatur erkannt wird und du den Code selbst kompilieren kannst, müssen die USB-Optionen in der Arduino IDE zwingend korrekt gesetzt sein.
 
 #### 1. Erforderliche Bibliotheken
 Installiere die folgenden Bibliotheken über den **Bibliotheksverwalter** der Arduino IDE (`Strg` + `Umschalt` + `I`):
@@ -145,8 +169,6 @@ Wähle im Menü unter **Werkzeuge (Tools)** folgende Optionen aus:
 2. **Port auswählen:** Wähle unter **Werkzeuge -> Port** den Seriellen Port aus.
 3. **Code hochladen:** Klicke auf **Upload** und warte auf *"Done uploading"*.
 4. **Neustart:** Ziehe das Board kurz ab oder drücke die **RESET-Taste**.
-
-*(Alternativ kann der integrierte Web-Flasher `flasher.html` genutzt werden, um das Board ohne IDE-Installation direkt im Browser zu bespielen).*
 
 ---
 
