@@ -1,104 +1,203 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="de" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ESP32 Bluetooth Keyboard</title>
+    
+    <!-- Theme direkt laden, um "Aufblitzen" eines falschen Themes zu verhindern -->
+    <script>
+        const savedTheme = localStorage.getItem('appTheme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+    </script>
+
     <style>
-        body { font-family: Arial, sans-serif; padding: 20px; max-width: 500px; margin: auto; }
-        textarea { width: 100%; height: 100px; margin-bottom: 10px; font-size: 16px; padding: 5px; box-sizing: border-box; }
-        button { padding: 10px 20px; font-size: 16px; cursor: pointer; margin-right: 10px; margin-bottom: 10px; }
+        :root {
+            /* Light Theme Variablen */
+            --bg-color: #ffffff;
+            --text-color: #333333;
+            --accent-color: #0066cc;
+            
+            --input-bg: #ffffff;
+            --input-border: #cccccc;
+            --input-text: #333333;
+            
+            --info-bg: #eef5fc;
+            --info-border: #0066cc;
+            
+            --details-bg: #f9f9f9;
+            --details-border: #dddddd;
+            
+            --btn-cad-bg: #ff4d4d;
+            --btn-cad-disabled: #ffb3b3;
+            --btn-enter-bg: #4CAF50;
+            --btn-enter-disabled: #a5d6a7;
+            
+            --footer-text: #666666;
+            --footer-border: #eeeeee;
+            
+            --slider-bg: #ccc;
+        }
+
+        [data-theme="dark"] {
+            /* Dark Theme Variablen */
+            color-scheme: dark;
+            --bg-color: #121212;
+            --text-color: #e0e0e0;
+            --accent-color: #66b3ff;
+            
+            --input-bg: #2d2d2d;
+            --input-border: #555555;
+            --input-text: #e0e0e0;
+            
+            --info-bg: #2a3b4c;
+            --info-border: #66b3ff;
+            
+            --details-bg: #1e1e1e;
+            --details-border: #333333;
+            
+            --btn-cad-bg: #cc0000;
+            --btn-cad-disabled: #5c2626;
+            --btn-enter-bg: #388e3c;
+            --btn-enter-disabled: #2d4d2f;
+            
+            --footer-text: #999999;
+            --footer-border: #333333;
+            
+            --slider-bg: #555;
+        }
+
+        /* Flexbox Layout für Body, um Footer unten zu halten */
+        html, body { height: 100%; margin: 0; padding: 0; }
+        body { 
+            display: flex; 
+            flex-direction: column; 
+            font-family: Arial, sans-serif; 
+            max-width: 500px; 
+            margin: 0 auto; 
+            padding: 20px; 
+            box-sizing: border-box;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+        }
+        
+        .main-content { flex: 1 0 auto; } /* Nimmt den verbleibenden Platz ein */
+        
+        textarea { width: 100%; height: 100px; margin-bottom: 10px; font-size: 16px; padding: 5px; box-sizing: border-box; background: var(--input-bg); color: var(--input-text); border: 1px solid var(--input-border); border-radius: 4px; }
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; margin-right: 10px; margin-bottom: 10px; border-radius: 4px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--text-color); }
+        button:disabled { cursor: not-allowed; opacity: 0.6; }
         
         .header-container { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .lang-select { padding: 5px 8px; font-size: 14px; border-radius: 4px; border: 1px solid #ccc; cursor: pointer; }
+        .header-controls { display: flex; align-items: center; gap: 10px; }
+        h2 { margin: 0; color: var(--accent-color); }
+        
+        .theme-toggle { background: none; border: none; font-size: 20px; cursor: pointer; padding: 5px; border-radius: 50%; transition: background 0.2s; margin-bottom: 0; }
+        .theme-toggle:hover { background: rgba(128, 128, 128, 0.2); }
 
-        /* Update Meldung - Standardmäßig versteckt */
-        .info-box { display: none; background-color: #eef5fc; border-left: 4px solid #0066cc; padding: 12px; margin-bottom: 20px; font-size: 14px; border-radius: 0 4px 4px 0; }
-        .info-box strong { color: #0066cc; display: block; margin-bottom: 5px; }
-        .info-box a { color: #0066cc; text-decoration: none; font-weight: bold; display: inline-block; margin-top: 5px; }
+        .lang-select { padding: 5px 8px; font-size: 14px; border-radius: 4px; border: 1px solid var(--input-border); background: var(--input-bg); color: var(--input-text); cursor: pointer; }
+
+        .info-box { display: none; background-color: var(--info-bg); border-left: 4px solid var(--info-border); padding: 12px; margin-bottom: 20px; font-size: 14px; border-radius: 0 4px 4px 0; }
+        .info-box strong { color: var(--accent-color); display: block; margin-bottom: 5px; }
+        .info-box a { color: var(--accent-color); text-decoration: none; font-weight: bold; display: inline-block; margin-top: 5px; }
         .info-box a:hover { text-decoration: underline; }
 
-        #cadBtn { background-color: #ff4d4d; color: white; border: none; border-radius: 4px; }
-        #cadBtn:disabled { background-color: #ffb3b3; cursor: not-allowed; }
+        #cadBtn { background-color: var(--btn-cad-bg); color: white; border: none; }
+        #cadBtn:disabled { background-color: var(--btn-cad-disabled); }
         
-        #enterBtn { background-color: #4CAF50; color: white; border: none; border-radius: 4px; }
-        #enterBtn:disabled { background-color: #a5d6a7; cursor: not-allowed; }
+        #enterBtn { background-color: var(--btn-enter-bg); color: white; border: none; }
+        #enterBtn:disabled { background-color: var(--btn-enter-disabled); }
         
         #status { margin-top: 20px; color: gray; font-weight: bold; }
         
-        details { margin-bottom: 20px; padding: 10px; background-color: #f9f9f9; border-radius: 4px; border: 1px solid #ddd; }
+        details { margin-bottom: 20px; padding: 10px; background-color: var(--details-bg); border-radius: 4px; border: 1px solid var(--details-border); }
         summary { cursor: pointer; font-weight: bold; margin-bottom: 5px; }
         .settings-content { margin-top: 10px; }
         .setting-row { margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; }
+        input[type="number"] { background: var(--input-bg); color: var(--input-text); border: 1px solid var(--input-border); border-radius: 4px; }
 
         /* Styling für den Schieberegler (Toggle Switch) */
         .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--slider-bg); transition: .4s; border-radius: 24px; }
         .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: #4CAF50; }
         input:checked + .slider:before { transform: translateX(20px); }
 
-        /* Footer styling */
-        footer { margin-top: 40px; padding-top: 15px; border-top: 1px solid #eee; text-align: center; font-size: 13px; color: #666; }
-        footer a { color: #0066cc; text-decoration: none; }
+        /* Footer styling (immer ganz unten) */
+        footer { 
+            flex-shrink: 0; 
+            margin-top: auto; 
+            padding-top: 15px; 
+            padding-bottom: 10px; 
+            border-top: 1px solid var(--footer-border); 
+            text-align: center; 
+            font-size: 13px; 
+            color: var(--footer-text); 
+        }
+        footer a { color: var(--accent-color); text-decoration: none; }
         footer a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
 
-    <div class="header-container">
-        <h2>ESP32 Remote Keyboard</h2>
-        <select id="langSelect" class="lang-select">
-            <option value="de">🇩🇪 DE</option>
-            <option value="en">🇬🇧 EN</option>
-        </select>
-    </div>
-    
-    <!-- Update Hinweis (wird per JS eingeblendet, wenn neue Firmware verfügbar ist) -->
-    <div id="updateAlert" class="info-box">
-        <strong data-i18n="updateTitle">🚀 Neue Firmware verfügbar!</strong>
-        <span id="versionNumbers"></span><br>
-        <a href="https://panthaflow.github.io/ESP32_BLE_Keyboard/WebFlasher.html" target="_blank" data-i18n="updateLink">Jetzt über den Web Flasher aktualisieren</a>
-    </div>
-
-    <button id="connectBtn" data-i18n="btnConnect">1. Bluetooth Verbinden</button>
-    <br><br>
-    
-    <details>
-        <summary data-i18n="settingsTitle">⚙️ Erweiterte Einstellungen</summary>
-        <div class="settings-content">
-            <div class="setting-row">
-                <label for="delayInput" data-i18n="labelDelay">Verzögerung (in Sekunden): </label>
-                <input type="number" id="delayInput" value="0" min="0" max="60" style="width: 60px; padding: 5px; font-size: 16px;">
-            </div>
-            <div class="setting-row">
-                <span data-i18n="labelClear">Text nach Senden löschen: </span>
-                <label class="switch">
-                    <input type="checkbox" id="clearTextToggle" checked>
-                    <span class="slider"></span>
-                </label>
-            </div>
-            <hr style="border: 0; border-top: 1px solid #ddd; margin: 15px 0;">
-            <div class="setting-row">
-                <span data-i18n="labelBios"><strong>Modus: BIOS</strong> (Standard US-Layout): </span>
-                <label class="switch">
-                    <input type="checkbox" id="biosToggle">
-                    <span class="slider"></span>
-                </label>
+    <div class="main-content">
+        <div class="header-container">
+            <h2>ESP32 Remote Keyboard</h2>
+            <div class="header-controls">
+                <button id="themeToggle" class="theme-toggle" title="Toggle Theme">☀️</button>
+                <select id="langSelect" class="lang-select">
+                    <option value="de">🇩🇪 DE</option>
+                    <option value="en">🇬🇧 EN</option>
+                </select>
             </div>
         </div>
-    </details>
+        
+        <!-- Update Hinweis (wird per JS eingeblendet, wenn neue Firmware verfügbar ist) -->
+        <div id="updateAlert" class="info-box">
+            <strong data-i18n="updateTitle">🚀 Neue Firmware verfügbar!</strong>
+            <span id="versionNumbers"></span><br>
+            <a href="https://panthaflow.github.io/ESP32_BLE_Keyboard/WebFlasher.html" target="_blank" data-i18n="updateLink">Jetzt über den Web Flasher aktualisieren</a>
+        </div>
 
-    <textarea id="textInput" data-i18n-placeholder="placeholderText" placeholder="Hier Text eingeben..." spellcheck="false" autocorrect="off" autocapitalize="off"></textarea>
-    
-    <div>
-        <button id="sendBtn" data-i18n="btnSend" disabled>2. Text Senden</button>
-        <button id="cadBtn" disabled>Strg + Alt + Entf</button>
-        <button id="enterBtn" disabled>↩️ Enter</button>
-    </div>
+        <button id="connectBtn" data-i18n="btnConnect" style="background-color: var(--accent-color); color: white; border: none; font-weight: bold;">1. Bluetooth Verbinden</button>
+        <br><br>
+        
+        <details>
+            <summary data-i18n="settingsTitle">⚙️ Erweiterte Einstellungen</summary>
+            <div class="settings-content">
+                <div class="setting-row">
+                    <label for="delayInput" data-i18n="labelDelay">Verzögerung (in Sekunden): </label>
+                    <input type="number" id="delayInput" value="0" min="0" max="60" style="width: 60px; padding: 5px; font-size: 16px;">
+                </div>
+                <div class="setting-row">
+                    <span data-i18n="labelClear">Text nach Senden löschen: </span>
+                    <label class="switch">
+                        <input type="checkbox" id="clearTextToggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <hr style="border: 0; border-top: 1px solid var(--details-border); margin: 15px 0;">
+                <div class="setting-row">
+                    <span data-i18n="labelBios"><strong>Modus: BIOS</strong> (Standard US-Layout): </span>
+                    <label class="switch">
+                        <input type="checkbox" id="biosToggle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+        </details>
 
-    <div id="status" data-i18n="statusDisconnected">Status: Nicht verbunden</div>
+        <textarea id="textInput" data-i18n-placeholder="placeholderText" placeholder="Hier Text eingeben..." spellcheck="false" autocorrect="off" autocapitalize="off"></textarea>
+        
+        <div>
+            <button id="sendBtn" data-i18n="btnSend" disabled style="background-color: var(--accent-color); color: white; border: none; font-weight: bold;">2. Text Senden</button>
+            <button id="cadBtn" disabled>Strg + Alt + Entf</button>
+            <button id="enterBtn" disabled>↩️ Enter</button>
+        </div>
+
+        <div id="status" data-i18n="statusDisconnected">Status: Nicht verbunden</div>
+    </div> <!-- Ende .main-content -->
 
     <footer>
         <span data-i18n="footerRepo">Projekt auf GitHub:</span> 
@@ -109,6 +208,23 @@
     </footer>
 
     <script>
+        // Theme Toggle Logic
+        const themeToggle = document.getElementById('themeToggle');
+        function updateThemeIcon() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            themeToggle.textContent = currentTheme === 'dark' ? '☀️' : '🌙';
+        }
+        updateThemeIcon(); // init icon based on loader script in <head>
+
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('appTheme', newTheme);
+            updateThemeIcon();
+        });
+
+
         const i18n = {
             de: {
                 updateTitle: "🚀 Neue Firmware verfügbar!",
@@ -183,7 +299,7 @@
 
         let bleCharacteristic = null;
         let isConnected = false;
-        let latestGithubVersion = null; // Speichert die abgerufene GitHub-Version zwischen
+        let latestGithubVersion = null;
 
         function updateLanguage(lang) {
             currentLang = lang;
@@ -209,18 +325,15 @@
             updateLanguage(e.target.value);
         });
 
-        // Event-Handler für eingehende Nachrichten vom ESP32
         function handleNotifications(event) {
             const value = event.target.value;
             const decoder = new TextDecoder('utf-8');
             const message = decoder.decode(value);
 
-            // Prüfen, ob die Nachricht die Versionsantwort ist
             if (message.startsWith("VER:")) {
                 const deviceVersion = message.replace("VER:", "").trim();
                 
                 if (latestGithubVersion && deviceVersion) {
-                    // Vergleicht die Strings semantisch (gibt > 0 zurück, wenn latestGithubVersion neuer ist)
                     if (latestGithubVersion.localeCompare(deviceVersion, undefined, { numeric: true, sensitivity: 'base' }) > 0) {
                         updateAlert.style.display = 'block';
                         versionNumbers.innerText = `(${i18n[currentLang].installedStr}${deviceVersion} -> ${i18n[currentLang].newStr}${latestGithubVersion})`;
@@ -229,10 +342,8 @@
             }
         }
 
-        // Ruft die neueste Version von GitHub ab und fragt dann den ESP nach seiner Version
         async function checkForUpdates() {
             try {
-                // 1. Hole neueste Version aus dem GitHub Repo
                 const response = await fetch(`https://api.github.com/repos/panthaflow/ESP32_BLE_Keyboard/contents/firmware`);
                 const files = await response.json();
                 const firmwareFiles = files.filter(f => f.name.endsWith(".merged.bin"));
@@ -243,8 +354,6 @@
                     if (match) latestGithubVersion = match[1];
                 }
 
-                // 2. Fordere die aktuelle Version vom ESP an
-                // Kurze Verzögerung, um sicherzustellen, dass Notifications bereit sind
                 setTimeout(async () => {
                     await sendRawCommand("CMD:GET_VER");
                 }, 200);
@@ -271,7 +380,6 @@
                 const service = await server.getPrimaryService(serviceUuid);
                 bleCharacteristic = await service.getCharacteristic(characteristicUuid);
 
-                // Notifications abonnieren
                 await bleCharacteristic.startNotifications();
                 bleCharacteristic.addEventListener('characteristicvaluechanged', handleNotifications);
 
@@ -283,7 +391,6 @@
                 cadBtn.disabled = false;
                 enterBtn.disabled = false;
 
-                // Starte Update-Prüfung
                 checkForUpdates();
 
                 device.addEventListener('gattserverdisconnected', () => {
