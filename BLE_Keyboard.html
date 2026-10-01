@@ -164,7 +164,7 @@
         <br><br>
         
         <details>
-            <summary data-i18n="settingsTitle">⚙️ Erweiterte Einstellungen</summary>
+            <summary data-i18n="settingsTitle">⚙️️ Erweiterte Einstellungen</summary>
             <div class="settings-content">
                 <div class="setting-row">
                     <label for="delayInput" data-i18n="labelDelay">Verzögerung (in Sekunden): </label>
@@ -316,8 +316,13 @@
                 if (i18n[lang][key]) el.placeholder = i18n[lang][key];
             });
 
-            if (!isConnected && bleCharacteristic === null) {
+            // Dynamischer Statustext je nach aktuellem Verbindungsstatus
+            if (isConnected) {
+                statusDiv.innerText = i18n[currentLang].statusConnected;
+                statusDiv.style.color = "green";
+            } else {
                 statusDiv.innerText = i18n[currentLang].statusDisconnected;
+                statusDiv.style.color = "gray";
             }
         }
 
