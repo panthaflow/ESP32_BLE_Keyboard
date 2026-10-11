@@ -1,6 +1,7 @@
 # ⌨️ ESP32-S3 BLE Hardware (layout independent) Keyboard Injector
 
-![License](https://img.shields.io/github/license/panthaflow/ESP32_BLE_Keyboard?color=blue) &nbsp;&nbsp;&nbsp; [![Stars](https://img.shields.io/github/stars/panthaflow/ESP32_BLE_Keyboard?style=social)](https://github.com/panthaflow/ESP32_BLE_Keyboard/stargazers) &nbsp;&nbsp;&nbsp; ![Release](https://img.shields.io/github/v/release/panthaflow/ESP32_BLE_Keyboard?color=green) &nbsp;&nbsp;&nbsp; ![ESP32-S3](https://img.shields.io/badge/Hardware-ESP32--S3-orange)
+[![License](https://img.shields.io/badge/License-PolyForm%20NC%201.0-blue.svg)](LICENSE)]
+[Stars](https://img.shields.io/github/stars/panthaflow/ESP32_BLE_Keyboard?style=social)](https://github.com/panthaflow/ESP32_BLE_Keyboard/stargazers) &nbsp;&nbsp;&nbsp; ![Release](https://img.shields.io/github/v/release/panthaflow/ESP32_BLE_Keyboard?color=green) &nbsp;&nbsp;&nbsp; ![ESP32-S3](https://img.shields.io/badge/Hardware-ESP32--S3-orange)
 
 [English](#-english) | [Deutsch](#-deutsch) | [🌐 Live Demo](https://panthaflow.github.io/ESP32_BLE_Keyboard/BLE_Keyboard.html) | [🌐 Web Flasher](https://panthaflow.github.io/ESP32_BLE_Keyboard/WebFlasher.html)
 
