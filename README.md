@@ -198,4 +198,4 @@ Die Webapp sendet folgende Strings über die BLE-Charakteristik an den ESP32-S3:
 
 ## 📝 License / Lizenz
 
-Distributed under the **Apache License 2.0**. See `LICENSE` for more information.
+Distributed under the **PolyForm NC 1.0**. See `LICENSE` for more information.
